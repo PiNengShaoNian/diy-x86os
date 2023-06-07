@@ -3,6 +3,8 @@
 	// 声明本地以下符号是全局的，在其它源文件中可以访问
 	.global _start
 
+	.extern os_init
+
 	// 指定以下的代码生成16位的机器指令，这样才能在启动时的实模式下运行
   	.code16
 
@@ -50,6 +52,27 @@ _start_32:
 	mov %ax, %gs
 	mov %ax, %fs
 	mov $_start, %esp
+
+    // 打开分页
+	// 1) 初始化设置页面
+	// 2) 将页表位置放到cr3中 
+	// 3) 将page位置为1
+	// 4) 如果页表项使用了4m模式需要先将cr4寄存器中的PSE位置为1
+    
+	call os_init
+	mov $pg_dir, %eax
+	mov %eax, %cr3
+
+    // 设置cr4的PSE位
+	mov %cr4, %eax
+	orl $(1 << 4), %eax
+	mov %eax, %cr4
+	
+	// 设置page位
+	mov %cr0, %eax
+	orl $(1 << 31), %eax
+	mov %eax, %cr0
+	
 	jmp .
 
 gdt_desc:

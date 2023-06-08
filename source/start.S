@@ -75,6 +75,14 @@ _start_32:
 	mov %eax, %cr0
 	
 	sti
+
+	push $APP_DATA_SEG // ss
+	push $task0_dpl3_stack + 1024 * 4  // esp
+	push  $0x202 // eflags
+	push $APP_CODE_SEG // cs
+	push $task_0_entry // eip
+	iret
+
 	jmp .
 
 // 时钟中断处理函数
@@ -86,6 +94,15 @@ timer_int:
     popa
 	pop %ds
     iret
+
+task_0_entry:
+    mov $APP_DATA_SEG, %ax
+	mov %ax, %ds
+	mov %ax, %es
+	mov %ax, %ss
+	mov %ax, %gs
+	mov %ax, %fs
+    jmp .
 
 gdt_desc:
     .word (256*8)-1

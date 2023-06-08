@@ -26,7 +26,12 @@ struct
     uint16_t limit_l, base_l, basel_attr, base_limit;
 } gdt_table[256] __attribute__((aligned(8))) = {
     [KERNEL_CODE_SEG / 8] = {0xffff, 0x0000, 0x9a00, 0x00cf},
-    [KERNEL_DATA_SEG / 8] = {0xffff, 0x0000, 0x9200, 0x00cf}};
+    [KERNEL_DATA_SEG / 8] = {0xffff, 0x0000, 0x9200, 0x00cf},
+
+    [APP_CODE_SEG / 8] = {0xffff, 0x0000, 0xfa00, 0x00cf},
+    [APP_DATA_SEG / 8] = {0xffff, 0x0000, 0xf300, 0x00cf}};
+
+unit32_t task0_dpl3_stack[1024] = {0};
 
 struct
 {

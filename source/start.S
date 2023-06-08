@@ -1,7 +1,7 @@
 #include "os.h"
 
 	// 声明本地以下符号是全局的，在其它源文件中可以访问
-	.global _start
+	.global _start, timer_int
 
 	.extern os_init
 
@@ -35,6 +35,7 @@ read_self_all:
 //  4) 发起一个长跳转清空流水线
 	cli
 	lgdt gdt_desc
+	lidt idt_desc // 加载中断向量表
 	mov $1, %eax
 	lmsw %ax
 	jmp $KERNEL_CODE_SEG, $_start_32
@@ -73,8 +74,23 @@ _start_32:
 	orl $(1 << 31), %eax
 	mov %eax, %cr0
 	
+	sti
 	jmp .
+
+// 时钟中断处理函数
+timer_int:
+    push %ds
+    pusha
+    mov $0x20, %al
+	outb %al, $0x20
+    popa
+	pop %ds
+    iret
 
 gdt_desc:
     .word (256*8)-1
 	.long gdt_table
+
+idt_desc:
+    .word (256*8)-1
+	.long idt_table

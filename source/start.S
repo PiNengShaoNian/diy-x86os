@@ -1,7 +1,7 @@
 #include "os.h"
 
 	// 声明本地以下符号是全局的，在其它源文件中可以访问
-	.global _start, timer_int
+	.global _start, timer_init
 
 	.extern os_init
 
@@ -11,17 +11,15 @@
 	// 以下是代码区
  	.text
 _start: 
-    mov $0, %ax
-	mov %ax, %ds
-	mov %ax, %es
-	mov %ax, %ss
-	mov %ax, %gs
-	mov %ax, %fs
+	mov $0, %ax				// 设置代码段
+	mov %ax, %ds			// 设置数据段
+	mov %ax, %es			// 设置数据段
+	mov %ax, %ss			// 设置栈段
 	mov $_start, %esp
 
 // 调用bios中断加载一扇区后面的代码到内存中
 read_self_all:
-    mov $0x7E00, %bx  // 要加载到的位置
+    mov $_start_32, %bx  // 要加载到的位置
 	mov $0x2, %cx  // 起始扇区
 	mov $0x240, %ax // 0x02 读操作, 0x40 读取多少个扇区
 	mov $0x80, %dx // 读取哪一个硬盘(0x80是第一个硬盘)
@@ -46,12 +44,11 @@ read_self_all:
     .code32
 	.text
 _start_32:
-    mov $KERNEL_DATA_SEG, %ax
+	// 重新加载数据段寄存器
+	mov $KERNEL_DATA_SEG, %ax
 	mov %ax, %ds
 	mov %ax, %es
 	mov %ax, %ss
-	mov %ax, %gs
-	mov %ax, %fs
 	mov $_start, %esp
 
     // 打开分页
@@ -73,24 +70,30 @@ _start_32:
 	mov %cr0, %eax
 	orl $(1 << 31), %eax
 	mov %eax, %cr0
-	
-	sti
 
+    // 设置当前的任务0
+    mov $TASK0_TSS_SEL, %ax 
+	ltr %ax
+	
+	// 下面模拟中断返回，从而实现从特权级0到特权级3的变化
+	// 中断发生时，会自动压入原SS, ESP, EFLAGS, CS, EIP到栈中
 	push $APP_DATA_SEG // ss
-	push $task0_dpl3_stack + 1024 * 4  // esp
+	push $task0_dpl3_stack + 1024  // esp
 	push  $0x202 // eflags
 	push $APP_CODE_SEG // cs
 	push $task_0_entry // eip
 	iret
 
-	jmp .
-
 // 时钟中断处理函数
-timer_int:
+timer_init:
     push %ds
     pusha
     mov $0x20, %al
 	outb %al, $0x20
+
+    mov $KERNEL_DATA_SEG, %ax
+	mov %ax, %ds
+	call task_sched
     popa
 	pop %ds
     iret
@@ -102,7 +105,7 @@ task_0_entry:
 	mov %ax, %ss
 	mov %ax, %gs
 	mov %ax, %fs
-    jmp .
+    jmp task_0
 
 gdt_desc:
     .word (256*8)-1

@@ -1,7 +1,7 @@
 #include "os.h"
 
 	// 声明本地以下符号是全局的，在其它源文件中可以访问
-	.global _start, timer_init
+	.global _start, timer_init, syscall_handler
 
 	.extern os_init
 
@@ -97,6 +97,26 @@ timer_init:
     popa
 	pop %ds
     iret
+
+syscall_handler:
+    push %ds
+	pusha
+
+	mov $KERNEL_DATA_SEG, %ax
+	mov %dx, %ds
+
+	mov %esp, %ebp
+	push 13*4(%ebp) // arg 1
+	push 12*4(%ebp) // arg 2
+	push 11*4(%ebp) // arg 3
+
+    call do_syscall
+
+	add $(3 * 4), %esp
+
+	popa
+	pop %ds
+    retf $(3 * 4)
 
 task_0_entry:
     mov $APP_DATA_SEG, %ax

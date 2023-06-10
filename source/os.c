@@ -7,6 +7,28 @@ typedef unsigned int uint32_t;
 
 #define MAP_ADDR (0x80000000) // 要映射的地址
 
+void do_syscall(int func, char *str, char color)
+{
+    static int row = 0;
+    if (func == 2)
+    {
+        unsigned short *dest = (unsigned short *)0xb8000 + 80 * row;
+        while (*str)
+        {
+            *dest++ = *str++ | (color << 8);
+        }
+
+        row = (row >= 25) ? 0 : row + 1;
+    }
+}
+
+void sys_show(char *str, char color)
+{
+    uint32_t addr[] = {0, SYSCALL_SEL};
+    __asm__ __volatile__("push %[color]; push %[str]; push %[id]; lcalll *(%[a])" ::[a] "r"(addr),
+                         [color] "m"(color), [str] "m"(str), [id] "r"(2));
+}
+
 /**
  * @brief 任务0
  */
@@ -15,10 +37,11 @@ void task_0(void)
     // 加上下面这句会跑飞
     // *(unsigned char *)MAP_ADDR = 0x1;
 
+    char *str = "task a: 1234";
     uint8_t color = 0;
     for (;;)
     {
-        color++;
+        sys_show(str, color++);
 
         // CPL=3时，非特权级模式下，无法使用cli指令
         // __asm__ __volatile__("cli");
@@ -30,10 +53,11 @@ void task_0(void)
  */
 void task_1(void)
 {
+    char *str = "task b: 5678";
     uint8_t color = 0xff;
     for (;;)
     {
-        color--;
+        sys_show(str, color--);
     }
 }
 
@@ -147,7 +171,8 @@ struct
     // 两个进程的task0和tas1的tss段:自己设置，直接写会编译报错
     [TASK0_TSS_SEL / 8] = {0x0068, 0, 0xe900, 0x0},
     [TASK1_TSS_SEL / 8] = {0x0068, 0, 0xe900, 0x0},
-};
+
+    [SYSCALL_SEL / 8] = {0x0000, KERNEL_CODE_SEG, 0xec03, 0x0000}};
 
 void outb(uint8_t data, uint16_t port)
 {
@@ -167,6 +192,7 @@ void task_sched(void)
 }
 
 void timer_init(void);
+void syscall_handler(void);
 void os_init(void)
 {
     // 初始化8259中断控制器，打开定时器中断
@@ -196,6 +222,7 @@ void os_init(void)
     // 添加任务和系统调用
     gdt_table[TASK0_TSS_SEL / 8].base_l = (uint16_t)(uint32_t)task0_tss;
     gdt_table[TASK1_TSS_SEL / 8].base_l = (uint16_t)(uint32_t)task1_tss;
+    gdt_table[SYSCALL_SEL / 8].limit_l = (uint16_t)(uint32_t)syscall_handler;
 
     // 虚拟内存
     // 0x80000000开始的4MB区域的映射

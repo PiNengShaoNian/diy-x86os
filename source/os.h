@@ -1,7 +1,6 @@
 #ifndef OS_H
 #define OS_H
 
-
 // 0-1:  RPL, 2: table indicator, 3-15: index
 
 // 代码段选择子
@@ -13,5 +12,6 @@
 #define APP_DATA_SEG ((4 * 8) | 3)
 #define TASK0_TSS_SEL ((5 * 8))
 #define TASK1_TSS_SEL ((6 * 8))
+#define SYSCALL_SEL ((7 * 8))
 
 #endif // OS_H

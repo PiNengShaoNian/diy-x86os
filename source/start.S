@@ -74,13 +74,16 @@ _start_32:
     // 设置当前的任务0
     mov $TASK0_TSS_SEL, %ax 
 	ltr %ax
+
+    mov $TASK0_LDT_SEG, %ax
+	lldt %ax
 	
 	// 下面模拟中断返回，从而实现从特权级0到特权级3的变化
 	// 中断发生时，会自动压入原SS, ESP, EFLAGS, CS, EIP到栈中
-	push $APP_DATA_SEG // ss
+	push $TASK_DATA_SEG // ss
 	push $task0_dpl3_stack + 1024  // esp
 	push  $0x202 // eflags
-	push $APP_CODE_SEG // cs
+	push $TASK_CODE_SEG // cs
 	push $task_0_entry // eip
 	iret
 

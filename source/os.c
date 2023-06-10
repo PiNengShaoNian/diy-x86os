@@ -80,6 +80,26 @@ uint32_t pg_dir[1024] __attribute__((aligned(4096))) = {
  */
 uint32_t task0_dpl0_stack[1024], task0_dpl3_stack[1024], task1_dpl0_stack[1024], task1_dpl3_stack[1024];
 
+struct
+{
+    uint16_t limit_l, base_l, basehl_attr, base_limit;
+} task0_ldt_table[2] __attribute__((aligned(8))) = {
+    // 0x00cffa000000ffff - 从0地址开始，P存在，DPL=3，Type=非系统段，32位代码段，界限4G
+    [TASK_CODE_SEG / 8] = {0xffff, 0x0000, 0xfa00, 0x00cf},
+    // 0x00cff3000000ffff - 从0地址开始，P存在，DPL=3，Type=非系统段，数据段，界限4G，可读写
+    [TASK_DATA_SEG / 8] = {0xffff, 0x0000, 0xf300, 0x00cf},
+};
+
+struct
+{
+    uint16_t limit_l, base_l, basehl_attr, base_limit;
+} task1_ldt_table[2] __attribute__((aligned(8))) = {
+    // 0x00cffa000000ffff - 从0地址开始，P存在，DPL=3，Type=非系统段，32位代码段，界限4G
+    [TASK_CODE_SEG / 8] = {0xffff, 0x0000, 0xfa00, 0x00cf},
+    // 0x00cff3000000ffff - 从0地址开始，P存在，DPL=3，Type=非系统段，数据段，界限4G，可读写
+    [TASK_DATA_SEG / 8] = {0xffff, 0x0000, 0xf300, 0x00cf},
+};
+
 /**
  * @brief 任务0的任务状态段
  */
@@ -105,13 +125,13 @@ uint32_t task0_tss[] = {
     0x2,
     0x3,
     // es, cs, ss, ds, fs, gs, ldt, iomap
-    APP_DATA_SEG,
-    APP_CODE_SEG,
-    APP_DATA_SEG,
-    APP_DATA_SEG,
-    APP_DATA_SEG,
-    APP_DATA_SEG,
-    0x0,
+    TASK_DATA_SEG,
+    TASK_CODE_SEG,
+    TASK_DATA_SEG,
+    TASK_DATA_SEG,
+    TASK_DATA_SEG,
+    TASK_DATA_SEG,
+    TASK0_LDT_SEG,
     0x0,
 };
 
@@ -137,13 +157,13 @@ uint32_t task1_tss[] = {
     0x2,
     0x3,
     // es, cs, ss, ds, fs, gs, ldt, iomap
-    APP_DATA_SEG,
-    APP_CODE_SEG,
-    APP_DATA_SEG,
-    APP_DATA_SEG,
-    APP_DATA_SEG,
-    APP_DATA_SEG,
-    0x0,
+    TASK_DATA_SEG,
+    TASK_CODE_SEG,
+    TASK_DATA_SEG,
+    TASK_DATA_SEG,
+    TASK_DATA_SEG,
+    TASK_DATA_SEG,
+    TASK1_LDT_SEG,
     0x0,
 };
 
@@ -168,11 +188,17 @@ struct
     [APP_CODE_SEG / 8] = {0xffff, 0x0000, 0xfa00, 0x00cf},
     // 0x00cff3000000ffff - 从0地址开始，P存在，DPL=3，Type=非系统段，数据段，界限4G，可读写
     [APP_DATA_SEG / 8] = {0xffff, 0x0000, 0xf300, 0x00cf},
+
     // 两个进程的task0和tas1的tss段:自己设置，直接写会编译报错
     [TASK0_TSS_SEL / 8] = {0x0068, 0, 0xe900, 0x0},
     [TASK1_TSS_SEL / 8] = {0x0068, 0, 0xe900, 0x0},
 
-    [SYSCALL_SEL / 8] = {0x0000, KERNEL_CODE_SEG, 0xec03, 0x0000}};
+    [SYSCALL_SEL / 8] = {0x0000, KERNEL_CODE_SEG, 0xec03, 0x0000},
+
+    // 两个任务的LDT
+    [TASK0_LDT_SEG / 8] = {sizeof(task0_ldt_table) - 1, (uint32_t)0, 0xe200, 0x00cf},
+    [TASK1_LDT_SEG / 8] = {sizeof(task0_ldt_table) - 1, (uint32_t)0, 0xe200, 0x00cf},
+};
 
 void outb(uint8_t data, uint16_t port)
 {
@@ -223,6 +249,8 @@ void os_init(void)
     gdt_table[TASK0_TSS_SEL / 8].base_l = (uint16_t)(uint32_t)task0_tss;
     gdt_table[TASK1_TSS_SEL / 8].base_l = (uint16_t)(uint32_t)task1_tss;
     gdt_table[SYSCALL_SEL / 8].limit_l = (uint16_t)(uint32_t)syscall_handler;
+    gdt_table[TASK0_LDT_SEG / 8].base_l = (uint32_t)task0_ldt_table;
+    gdt_table[TASK1_LDT_SEG / 8].base_l = (uint32_t)task1_ldt_table;
 
     // 虚拟内存
     // 0x80000000开始的4MB区域的映射

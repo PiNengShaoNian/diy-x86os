@@ -8,8 +8,6 @@
         "task.h": "c",
         "types.h": "c",
         "fcntl.h": "c",
-        "_default_fcntl.h": "c",
-        "stdint.h": "c",
-        "stdint-gcc.h": "c"
+        "_default_fcntl.h": "c"
     },
 }

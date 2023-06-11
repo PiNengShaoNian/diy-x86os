@@ -3,8 +3,23 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0", 
     "tasks": [
-       {
-            "label": "启动qemu",
+        {
+            "label": "----------------- image write(不要点)",
+            "type": "shell",
+            "command": "bash ${workspaceRoot}/script/img-write-osx.sh",
+            "windows": {
+                // windows下特殊一些
+                "command": "${workspaceRoot}/script/img-write-win.bat",
+            },
+            "linux":{
+                "command": "bash ${workspaceRoot}/script/img-write-linux.sh"
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/../../image/"
+            },
+        },
+        {
+            "label": "----------------- start qemu(不要点)",
             "type": "shell",
             "command": "bash ${workspaceRoot}/script/qemu-debug-osx.sh",
             "windows": {
@@ -15,8 +30,16 @@
                 "command": "bash ${workspaceRoot}/script/qemu-debug-linux.sh",
             },
             "options": {
-                "cwd": "${workspaceRoot}/../image/"
-            }
+                "cwd": "${workspaceRoot}/../../image/"
+            },
         },
+        {
+            "label": "调试准备",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "----------------- image write(不要点)",
+                "----------------- start qemu(不要点)"
+            ],
+        }
     ]
 }

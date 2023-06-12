@@ -12,6 +12,7 @@
   	.code16
  	.text
 	.global _start
+	.extern boot_entry
 _start:
     mov $0, %ax
 	mov %ax, %ds
@@ -26,7 +27,16 @@ _start:
 	mov $'L', %al
 	int $0x10
 
-	jmp .
+read_loader:
+    mov $0x8000, %bx
+	mov $0x2, %ah
+	mov $0x2, %cx
+	mov $64, %al
+	mov $0x0080, %dx
+	int $0x13
+	jc read_loader
+
+	jmp boot_entry
 	
 	// 引导结束段
 	.section boot_end, "ax"

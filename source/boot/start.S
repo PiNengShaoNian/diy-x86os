@@ -21,6 +21,11 @@ _start:
 	mov %ax, %gs
 
 	mov $_start, %esp
+
+    mov $0xe, %ah
+	mov $'L', %al
+	int $0x10
+
 	jmp .
 	
 	// 引导结束段

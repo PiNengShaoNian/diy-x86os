@@ -59,11 +59,11 @@
                 //      "text": "add-symbol-file ./build/source/kernel/kernel.elf 0x10000",
                 //     "ignoreFailures": false
                 // },
-                // {
-                //     "description": "加载load符号文件",
-                //     "text": "add-symbol-file ./build/source/loader/loader.elf 0x8000",
-                //     "ignoreFailures": false
-                // },
+                {
+                    "description": "加载load符号文件",
+                    "text": "add-symbol-file ./build/source/loader/loader.elf 0x8000",
+                    "ignoreFailures": false
+                },
                 // {
                 //     "description": "加载boot符号文件",
                 //     "text": "add-symbol-file ./build/source/boot/boot.elf 0x7c00",

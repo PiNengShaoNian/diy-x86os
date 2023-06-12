@@ -14,7 +14,7 @@ set DISK1_NAME=disk1.vhd
 
 dd if=boot.bin of=%DISK1_NAME% bs=512 conv=notrunc count=1
 
-@REM dd if=loader.bin of=%DISK1_NAME% bs=512 conv=notrunc seek=1
+dd if=loader.bin of=%DISK1_NAME% bs=512 conv=notrunc seek=1
 
 @REM dd if=kernel.elf of=%DISK1_NAME% bs=512 conv=notrunc seek=100
 

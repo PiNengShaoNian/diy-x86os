@@ -1,6 +1,7 @@
 __asm__(".code16gcc");
 
 #include "loader.h"
+#include "comm/cpu_instr.h"
 
 boot_info_t boot_info;
 
@@ -52,11 +53,32 @@ static void detect_memory()
     show_msg("ok\n");
 }
 
+uint16_t gdt_table[][4] = {
+    {0, 0, 0, 0},
+    {0xFFFF, 0x0000, 0x9a00, 0x00cf},
+    {0xFFFF, 0x0000, 0x9200, 0x00cf},
+};
+
+void protect_mode_entry(void);
+
+static void enter_protect_mode(void)
+{
+    cli();
+
+    uint8_t v = inb(0x92);
+    outb(0x92, v | 0x2);
+
+    lgdt((uint32_t)gdt_table, sizeof(gdt_table));
+
+    uint32_t cr0 = read_cr0();
+    write_cr0(cr0 | (1 << 0));
+
+    far_jump(8, (uint32_t)protect_mode_entry);
+}
+
 void loader_entry(void)
 {
     show_msg("loading...\n\r");
     detect_memory();
-    for (;;)
-    {
-    }
+    enter_protect_mode();
 }

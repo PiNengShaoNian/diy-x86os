@@ -16,7 +16,7 @@ dd if=boot.bin of=%DISK1_NAME% bs=512 conv=notrunc count=1
 
 dd if=loader.bin of=%DISK1_NAME% bs=512 conv=notrunc seek=1
 
-@REM dd if=kernel.elf of=%DISK1_NAME% bs=512 conv=notrunc seek=100
+dd if=kernel.elf of=%DISK1_NAME% bs=512 conv=notrunc seek=100
 
 @REM dd if=init.elf of=%DISK1_NAME% bs=512 conv=notrunc seek=5000
 @REM dd if=shell.elf of=%DISK1_NAME% bs=512 conv=notrunc seek=5000

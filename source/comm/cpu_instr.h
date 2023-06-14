@@ -13,6 +13,16 @@ static inline uint8_t inb(uint16_t port)
     return rv;
 }
 
+static inline uint16_t inw(uint16_t port)
+{
+    uint16_t rv;
+    // in ax, dx
+    __asm__ __volatile__("in %[p], %[v]"
+                         : [v] "=a"(rv)
+                         : [p] "d"(port));
+    return rv;
+}
+
 static inline void outb(uint16_t port, uint8_t data)
 {
     // outb al, dx
@@ -49,7 +59,7 @@ static inline uint16_t read_cr0(void)
     uint32_t cr0;
 
     __asm__ __volatile__("mov %%cr0, %[v]"
-                         : [v]"=r"(cr0));
+                         : [v] "=r"(cr0));
     return cr0;
 }
 

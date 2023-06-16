@@ -56,7 +56,7 @@
                 },       
                 {
                     "description": "加载内核符号文件",
-                     "text": "add-symbol-file ./build/source/kernel/kernel.elf 0x100000",
+                     "text": "add-symbol-file ./build/source/kernel/kernel.elf 0x10000",
                     "ignoreFailures": false
                 },
                 {

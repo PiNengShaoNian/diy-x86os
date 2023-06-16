@@ -10,6 +10,7 @@
         "fcntl.h": "c",
         "_default_fcntl.h": "c",
         "loader.h": "c",
-        "boot_info.h": "c"
+        "boot_info.h": "c",
+        "cpu.h": "c"
     },
 }

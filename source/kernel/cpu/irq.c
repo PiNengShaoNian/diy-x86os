@@ -236,3 +236,13 @@ void irq_enable_global(void)
 {
     sti();
 }
+
+void pic_send_eoi(int irq_num)
+{
+    irq_num -= IRQ_PIC_START;
+
+    if (irq_num >= 8)
+        outb(PIC1_OCW2, PIC_OCW2_EOI);
+    else
+        outb(PIC0_OCW2, PIC_OCW2_EOI);
+}

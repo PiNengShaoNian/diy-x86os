@@ -22,6 +22,8 @@
 #define IRQ19_XM 19
 #define IRQ20_VE 20
 
+#define IRQ0_TIMER 0x20
+
 typedef struct _exception_frame_t
 {
     uint32_t gs, fs, es, ds;
@@ -83,5 +85,7 @@ void irq_enable(int irq_num);
 void irq_disable(int irq_num);
 void irq_disable_global(void);
 void irq_enable_global(void);
+
+void pic_send_eoi(int irq_num);
 
 #endif

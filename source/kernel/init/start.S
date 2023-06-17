@@ -25,5 +25,25 @@ gdt_reload:
     mov $(stack + KERNEL_STACK_SIZE), %esp
     jmp init_main
 
-.bss
+    .bss
 .comm stack, KERNEL_STACK_SIZE
+
+    .text
+    .extern do_handler_unknown
+    .global exception_handler_unknown
+exception_handler_unknown:
+    pusha
+    push %ds
+    push %es
+    push %fs
+    push %gs
+
+    call do_handler_unknown
+    
+    pop %gs
+    pop %fs
+    pop %es
+    pop %ds
+    popa
+    
+    iret

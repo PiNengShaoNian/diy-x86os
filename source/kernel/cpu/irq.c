@@ -113,6 +113,37 @@ void do_handler_virtual_exception(exception_frame_t *frame)
     do_default_handler(frame, "Virtualization Exception.");
 }
 
+static void init_pic(void)
+{
+    // 边缘触发，级联，需要配置icw4, 8086模式
+    outb(PIC0_ICW1, PIC_ICW1_ALWAYS_1 | PIC_ICW1_ICW4);
+
+    // 对应的中断号起始序号0x20
+    outb(PIC0_ICW2, IRQ_PIC_START);
+
+    // 主片IRQ2有从片
+    outb(PIC0_ICW3, 1 << 2);
+
+    // 普通全嵌套、非缓冲、非自动结束、8086模式
+    outb(PIC0_ICW4, PIC_ICW4_8086);
+
+    // 边缘触发，级联，需要配置icw4, 8086模式
+    outb(PIC1_ICW1, PIC_ICW1_ICW4 | PIC_ICW1_ALWAYS_1);
+
+    // 起始中断序号，要加上8
+    outb(PIC1_ICW2, IRQ_PIC_START + 8);
+
+    // 没有从片，连接到主片的IRQ2上
+    outb(PIC1_ICW3, 2);
+
+    // 普通全嵌套、非缓冲、非自动结束、8086模式
+    outb(PIC1_ICW4, PIC_ICW4_8086);
+
+    // 禁止所有中断, 允许从PIC1传来的中断
+    outb(PIC0_IMR, 0xFF & ~(1 << 2));
+    outb(PIC1_IMR, 0xFF);
+}
+
 void irq_init(void)
 {
     for (int i = 0; i < IDT_TABLE_NR; i++)
@@ -144,6 +175,8 @@ void irq_init(void)
     irq_install(IRQ20_VE, exception_handler_virtual_exception);
 
     lidt((uint32_t)idt_table, sizeof(idt_table));
+
+    init_pic();
 }
 
 int irq_install(int irq_num, irq_handler_t handler)

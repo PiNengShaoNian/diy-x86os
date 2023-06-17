@@ -60,3 +60,21 @@ exception_handler_\name:
 
 exception_handler unknown, -1, 0
 exception_handler divider, 0, 0
+exception_handler Debug, 1, 0
+exception_handler NMI, 2, 0
+exception_handler breakpoint, 3, 0
+exception_handler overflow, 4, 0
+exception_handler bound_range, 5, 0
+exception_handler invalid_opcode, 6, 0
+exception_handler device_unavailable, 7, 0
+exception_handler double_fault, 8, 1
+exception_handler invalid_tss, 10, 1
+exception_handler segment_not_present, 11, 1
+exception_handler stack_segment_fault, 12, 1
+exception_handler general_protection, 13, 1
+exception_handler page_fault, 14, 1
+exception_handler fpu_error, 16, 0
+exception_handler alignment_check, 17, 1
+exception_handler machine_check, 18, 0
+exception_handler smd_exception, 19, 0
+exception_handler virtual_exception, 20, 0

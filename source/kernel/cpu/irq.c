@@ -7,7 +7,7 @@
 
 static gate_desc_t idt_table[IDT_TABLE_NR];
 
-static void do_default_handler(const char *message)
+static void do_default_handler(exception_frame_t *frame, const char *message)
 {
     for (;;)
         ;
@@ -15,9 +15,9 @@ static void do_default_handler(const char *message)
 
 void exception_handler_unknown(void);
 
-void do_handler_unknown(void)
+void do_handler_unknown(exception_frame_t *frame)
 {
-    do_default_handler("unknown exception");
+    do_default_handler(frame, "unknown exception");
 }
 
 void irq_init(void)

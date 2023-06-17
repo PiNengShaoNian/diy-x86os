@@ -28,10 +28,16 @@ gdt_reload:
     .bss
 .comm stack, KERNEL_STACK_SIZE
 
+.macro exception_handler name num with_err_code
     .text
-    .extern do_handler_unknown
-    .global exception_handler_unknown
-exception_handler_unknown:
+    .extern do_handler_\name
+    .global exception_handler_\name
+exception_handler_\name:
+    .if \with_err_code == 0
+        push $0
+    .endif
+
+    push $\num
     pusha
     push %ds
     push %es
@@ -39,7 +45,7 @@ exception_handler_unknown:
     push %gs
 
     push %esp
-    call do_handler_unknown
+    call do_handler_\name
     add $4, %esp
     
     pop %gs
@@ -47,5 +53,10 @@ exception_handler_unknown:
     pop %es
     pop %ds
     popa
-    
+
+    add $(2*4), %esp
     iret
+.endm
+
+exception_handler unknown, -1, 0
+exception_handler divider, 0, 0

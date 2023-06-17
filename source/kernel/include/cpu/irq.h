@@ -79,4 +79,9 @@ void exception_handler_virtual_exception(void);
 
 #define IRQ_PIC_START 0x20 // PIC中断起始号
 
+void irq_enable(int irq_num);
+void irq_disable(int irq_num);
+void irq_disable_global(void);
+void irq_enable_global(void);
+
 #endif

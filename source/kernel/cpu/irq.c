@@ -188,3 +188,51 @@ int irq_install(int irq_num, irq_handler_t handler)
                   GATE_P_PRESENT | GATE_DPL0 | GATE_TYPE_IDT);
     return 0;
 }
+
+void irq_enable(int irq_num)
+{
+    if (irq_num < IRQ_PIC_START)
+        return;
+
+    irq_num -= IRQ_PIC_START;
+
+    if (irq_num < 8)
+    {
+        uint8_t mask = inb(PIC0_IMR) & ~(1 << irq_num);
+        outb(PIC0_IMR, mask);
+    }
+    else
+    {
+        uint8_t mask = inb(PIC1_IMR) & ~(1 << irq_num);
+        outb(PIC1_IMR, mask);
+    }
+}
+
+void irq_disable(int irq_num)
+{
+    if (irq_num < IRQ_PIC_START)
+        return;
+
+    irq_num -= IRQ_PIC_START;
+
+    if (irq_num < 8)
+    {
+        uint8_t mask = inb(PIC0_IMR) | (1 << irq_num);
+        outb(PIC0_IMR, mask);
+    }
+    else
+    {
+        uint8_t mask = inb(PIC1_IMR) | (1 << irq_num);
+        outb(PIC1_IMR, mask);
+    }
+}
+
+void irq_disable_global(void)
+{
+    cli();
+}
+
+void irq_enable_global(void)
+{
+    sti();
+}

@@ -21,6 +21,15 @@ void segment_desc_set(int selector, uint32_t base,
     desc->base31_24 = (base >> 24) & 0xFF;
 }
 
+void gate_desc_set(gate_desc_t *desc, uint16_t selector,
+                   uint32_t offset, uint16_t attr)
+{
+    desc->offset15_0 = offset & 0xFFFF;
+    desc->selector = selector;
+    desc->attr = attr;
+    desc->offset31_16 = (offset >> 16) & 0xFFFF;
+}
+
 void init_gdt(void)
 {
     for (int i = 0; i < GDT_TABLE_SIZE; i++)

@@ -100,6 +100,44 @@ int kernel_memcmp(void *d1, void *d2, int size)
     return 0;
 }
 
+void kernel_itoa(char *buf, int num, int base)
+{
+    static const char *num2ch = {"0123456789ABCDEF"};
+    char *p = buf;
+    if ((base != 2) && (base != 8) && (base != 10) && (base != 16))
+    {
+        *p = '\0';
+        return;
+    }
+
+    if ((num < 0) && (base == 10))
+    {
+        *p++ = '-';
+        num = -num;
+        buf = buf + 1;
+    }
+
+    do
+    {
+        char ch = num2ch[num % base];
+        *p++ = ch;
+        num /= base;
+    } while (num);
+
+    *p-- = '\0';
+
+    char *start = buf;
+    while (start < p)
+    {
+        char ch = *start;
+        *start = *p;
+        *p = ch;
+
+        p--;
+        start++;
+    }
+}
+
 void kernel_vsprintf(char *buf, const char *fmt, va_list args)
 {
     enum
@@ -130,10 +168,36 @@ void kernel_vsprintf(char *buf, const char *fmt, va_list args)
                 while (len--)
                     *curr++ = *str++;
             }
+            else if (ch == 'd')
+            {
+                int num = va_arg(args, int);
+                kernel_itoa(curr, num, 10);
+                curr += kernel_strlen(curr);
+            }
+            else if (ch == 'x')
+            {
+                int num = va_arg(args, int);
+                kernel_itoa(curr, num, 16);
+                curr += kernel_strlen(curr);
+            }
+            else if (ch == 'c')
+            {
+                char c = va_arg(args, int);
+                *curr++ = c;
+            }
 
             state = NORMAL;
             break;
         }
         }
     }
+}
+
+void kernel_sprintf(char *buf, const char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    kernel_vsprintf(buf, fmt, args);
+    va_end(args);
 }

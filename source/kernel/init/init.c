@@ -3,10 +3,13 @@
 #include "cpu/irq.h"
 #include "dev/time.h"
 #include "tools/log.h"
+#include "tools/klib.h"
 #include "os_cfg.h"
 
 void kernel_init(boot_info_t *boot_info)
 {
+    ASSERT(boot_info->ram_region_count != 0);
+
     cpu_init();
 
     log_init();

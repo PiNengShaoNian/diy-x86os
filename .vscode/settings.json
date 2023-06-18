@@ -15,6 +15,9 @@
         "os_cfg.h": "c",
         "irq.h": "c",
         "cpu_instr.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "log.h": "c",
+        "stdarg.h": "c",
+        "klib.h": "c"
     },
 }

@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include "tools/klib.h"
 
 void kernel_strcpy(char *dest, const char *src)
@@ -97,4 +98,42 @@ int kernel_memcmp(void *d1, void *d2, int size)
     }
 
     return 0;
+}
+
+void kernel_vsprintf(char *buf, const char *fmt, va_list args)
+{
+    enum
+    {
+        NORMAL,
+        READ_FMT
+    } state = NORMAL;
+    char *curr = buf;
+    char ch;
+    while ((ch = *fmt++))
+    {
+        switch (state)
+        {
+        case NORMAL:
+        {
+            if (ch == '%')
+                state = READ_FMT;
+            else
+                *curr++ = ch;
+            break;
+        }
+        case READ_FMT:
+        {
+            if (ch == 's')
+            {
+                const char *str = va_arg(args, char *);
+                int len = kernel_strlen(str);
+                while (len--)
+                    *curr++ = *str++;
+            }
+
+            state = NORMAL;
+            break;
+        }
+        }
+    }
 }

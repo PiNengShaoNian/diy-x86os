@@ -3,6 +3,9 @@
 
 #include "comm/types.h"
 
+#define EFLAGS_DEFAULT (1 << 1)
+#define EFLAGS_IF (1 << 9)
+
 #pragma pack(1)
 typedef struct _segment_desc_t
 {

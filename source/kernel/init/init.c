@@ -5,6 +5,7 @@
 #include "tools/log.h"
 #include "tools/klib.h"
 #include "os_cfg.h"
+#include "core/task.h"
 
 void kernel_init(boot_info_t *boot_info)
 {
@@ -16,6 +17,10 @@ void kernel_init(boot_info_t *boot_info)
     irq_init();
     time_init();
 }
+
+static task_t first_task;
+static uint32_t init_task_stack[1024];
+static task_t init_task;
 
 void init_task_entry(void)
 {
@@ -30,7 +35,10 @@ void init_main()
     log_printf("Version: %s %s", OS_VERSION, "diy x86-os");
     log_printf("%d %d %x %c 0x%x", -123, 123456, 0x12345, 'a', 15);
 
+    task_init(&init_task, (uint32_t)init_task_entry, (uint32_t)&init_task_stack[1024]);
+    task_init(&first_task, (uint32_t)0, 0);
+
     int count = 0;
     for (;;)
-        log_printf("int main: %d", count++);
+        log_printf("main task: %d", count++);
 }

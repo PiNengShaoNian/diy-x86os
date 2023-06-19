@@ -30,6 +30,18 @@ void gate_desc_set(gate_desc_t *desc, uint16_t selector,
     desc->offset31_16 = (offset >> 16) & 0xFFFF;
 }
 
+int gdt_alloc_desc()
+{
+    for (int i = 1; i < GDT_TABLE_SIZE; i++)
+    {
+        segment_desc_t *desc = gdt_table + i;
+        if (desc->attr == 0)
+            return i << 3;
+    }
+
+    return -1;
+}
+
 void init_gdt(void)
 {
     for (int i = 0; i < GDT_TABLE_SIZE; i++)
@@ -56,4 +68,12 @@ void init_gdt(void)
 void cpu_init(void)
 {
     init_gdt();
+}
+
+/**
+ * 切换至TSS，即跳转实现任务切换
+ */
+void switch_to_tss(int tss_sel)
+{
+    far_jump(tss_sel, 0);
 }

@@ -7,6 +7,7 @@
 #include "tools/klib.h"
 #include "os_cfg.h"
 #include "core/task.h"
+#include "tools/list.h"
 
 void kernel_init(boot_info_t *boot_info)
 {
@@ -33,8 +34,15 @@ void init_task_entry(void)
     }
 }
 
+void list_test(void)
+{
+    list_t list;
+    list_init(&list);
+}
+
 void init_main()
 {
+    list_test();
     log_printf("Kernel is running...");
     log_printf("Version: %s %s", OS_VERSION, "diy x86-os");
     log_printf("%d %d %x %c 0x%x", -123, 123456, 0x12345, 'a', 15);

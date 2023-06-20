@@ -38,6 +38,9 @@ void list_test(void)
 {
     list_t list;
     list_init(&list);
+
+    log_printf("list: first=0x%x, last=0x%x, count=%d",
+               list_first(&list), list_last(&list), list.count);
 }
 
 void init_main()

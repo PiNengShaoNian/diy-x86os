@@ -94,6 +94,15 @@ void list_test(void)
 
     log_printf("list: first=0x%x, last=0x%x, count=%d",
                list_first(&list), list_last(&list), list.count);
+
+    struct type_t
+    {
+        int i;
+        list_node_t node;
+    } v = {0x123456};
+
+    list_node_t *v_node = &v.node;
+    struct type_t *p_v = list_node_parent(v_node, struct type_t, node);
 }
 
 void init_main()

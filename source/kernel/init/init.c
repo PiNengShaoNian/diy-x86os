@@ -40,7 +40,7 @@ void init_main()
     log_printf("Version: %s %s", OS_VERSION, "diy x86-os");
     log_printf("%d %d %x %c 0x%x", -123, 123456, 0x12345, 'a', 15);
 
-    task_init(&init_task, (uint32_t)init_task_entry, (uint32_t)&init_task_stack[1024]);
+    task_init(&init_task, "init task", (uint32_t)init_task_entry, (uint32_t)&init_task_stack[1024]);
     task_first_init();
 
     int count = 0;

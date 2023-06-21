@@ -44,4 +44,10 @@ void task_first_init(void);
 
 task_t *task_first_task(void);
 
+int sys_sched_yield(void);
+
+task_t *task_current(void);
+
+void task_dispatch(void);
+
 #endif

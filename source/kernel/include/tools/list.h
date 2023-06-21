@@ -48,6 +48,11 @@ static inline list_node_t *list_last(list_t *list)
     return list->last;
 }
 
+static inline int list_count(list_t *list)
+{
+    return list->count;
+}
+
 void list_insert_first(list_t *list, list_node_t *node);
 void list_insert_last(list_t *list, list_node_t *node);
 

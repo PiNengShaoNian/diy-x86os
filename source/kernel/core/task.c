@@ -3,6 +3,10 @@
 #include "os_cfg.h"
 #include "cpu/cpu.h"
 #include "tools/log.h"
+#include "comm/cpu_instr.h"
+
+static task_manager_t task_manager;
+
 static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
 {
     int tss_sel = gdt_alloc_desc();
@@ -50,4 +54,23 @@ void task_switch_from_to(task_t *from, task_t *to)
 {
     switch_to_tss(to->tss_sel);
     // simple_switch(&from->stack, to->stack);
+}
+
+void task_first_init(void)
+{
+    task_init(&task_manager.first_task, (uint32_t)0, 0);
+    write_tr(task_manager.first_task.tss_sel);
+    task_manager.curr_task = &task_manager.first_task;
+}
+
+task_t *task_first_task(void)
+{
+    return &task_manager.first_task;
+}
+
+void task_manager_init(void)
+{
+    list_init(&task_manager.ready_list);
+    list_init(&task_manager.task_list);
+    task_manager.curr_task = (task_t *)0;
 }

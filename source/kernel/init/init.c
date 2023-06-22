@@ -30,7 +30,6 @@ void init_task_entry(void)
     for (;;)
     {
         log_printf("init task: %d", count++);
-        sys_sched_yield();
     }
 }
 
@@ -43,10 +42,10 @@ void init_main()
     task_init(&init_task, "init task", (uint32_t)init_task_entry, (uint32_t)&init_task_stack[1024]);
     task_first_init();
 
+    irq_enable_global();
     int count = 0;
     for (;;)
     {
         log_printf("main task: %d", count++);
-        sys_sched_yield();
     }
 }

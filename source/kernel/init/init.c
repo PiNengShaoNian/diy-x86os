@@ -18,6 +18,8 @@ void kernel_init(boot_info_t *boot_info)
     log_init();
     irq_init();
     time_init();
+
+    task_manager_init();
 }
 
 static task_t first_task;
@@ -29,7 +31,8 @@ void init_task_entry(void)
     int count = 0;
     for (;;)
     {
-        // log_printf("init task: %d", count++);
+        log_printf("init task: %d", count++);
+        sys_sleep(500);
     }
 }
 

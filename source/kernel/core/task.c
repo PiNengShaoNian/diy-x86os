@@ -7,6 +7,7 @@
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
 
+static uint32_t idle_task_stack[IDLE_TASK_STACK_SIZE];
 static task_manager_t task_manager;
 
 static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
@@ -35,6 +36,9 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
 
 void task_set_ready(task_t *task)
 {
+    if (task == &task_manager.idle_task)
+        return;
+
     list_insert_last(&task_manager.ready_list, &task->run_node);
     task->state = TASK_READY;
 }
@@ -80,22 +84,39 @@ task_t *task_first_task(void)
     return &task_manager.first_task;
 }
 
+static void idle_task(void)
+{
+    for (;;)
+        hlt();
+}
+
 void task_manager_init(void)
 {
     list_init(&task_manager.ready_list);
     list_init(&task_manager.task_list);
     list_init(&task_manager.sleep_list);
     task_manager.curr_task = (task_t *)0;
+
+    task_init(&task_manager.idle_task, "idle_task",
+              (uint32_t)idle_task,
+              (uint32_t)(&idle_task_stack[IDLE_TASK_STACK_SIZE]));
 }
 
 void task_set_block(task_t *task)
 {
+    if (task == &task_manager.idle_task)
+        return;
+
     list_remove(&task_manager.ready_list, &task->run_node);
 }
 
 task_t *task_next_run(void)
 {
+    if (list_count(&task_manager.ready_list) == 0)
+        return &task_manager.idle_task;
+
     list_node_t *task_node = list_first(&task_manager.ready_list);
+
     return list_node_parent(task_node, task_t, run_node);
 }
 

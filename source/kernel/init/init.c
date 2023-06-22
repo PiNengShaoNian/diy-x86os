@@ -29,7 +29,7 @@ void init_task_entry(void)
     int count = 0;
     for (;;)
     {
-        log_printf("init task: %d", count++);
+        // log_printf("init task: %d", count++);
     }
 }
 
@@ -47,5 +47,6 @@ void init_main()
     for (;;)
     {
         log_printf("main task: %d", count++);
+        sys_sleep(1000);
     }
 }

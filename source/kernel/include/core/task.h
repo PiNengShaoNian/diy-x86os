@@ -20,6 +20,7 @@ typedef struct _task_t
         TASK_WAITING,
     } state;
 
+    int sleep_ticks;
     int time_ticks;
     int slice_ticks;
 
@@ -39,6 +40,7 @@ typedef struct _task_manager_t
     task_t *curr_task;
     list_t ready_list;
     list_t task_list;
+    list_t sleep_list;
 
     task_t first_task;
 } task_manager_t;
@@ -56,5 +58,9 @@ task_t *task_current(void);
 void task_dispatch(void);
 
 void task_time_tick();
+
+void task_set_sleep(task_t *task, uint32_t ticks);
+void task_set_wakeup(task_t *task);
+void sys_sleep(uint32_t ms);
 
 #endif

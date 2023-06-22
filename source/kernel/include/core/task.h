@@ -26,6 +26,7 @@ typedef struct _task_t
 
     char name[TASK_NAME_SIZE];
     list_node_t run_node;
+    list_node_t wait_node;
     list_node_t all_node;
     tss_t tss;
     int tss_sel;
@@ -60,6 +61,8 @@ void task_dispatch(void);
 
 void task_time_tick();
 
+void task_set_ready(task_t *task);
+void task_set_block(task_t *task);
 void task_set_sleep(task_t *task, uint32_t ticks);
 void task_set_wakeup(task_t *task);
 void sys_sleep(uint32_t ms);

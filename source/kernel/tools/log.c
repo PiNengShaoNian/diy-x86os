@@ -3,11 +3,15 @@
 #include "tools/klib.h"
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
+#include "ipc/mutex.h"
 
 #define COM1_PORT 0x3F8
 
+static mutex_t mutex;
+
 void log_init(void)
 {
+    mutex_init(&mutex);
     outb(COM1_PORT + 1, 0x00);
     outb(COM1_PORT + 3, 0x80);
     outb(COM1_PORT + 0, 0x3);
@@ -26,7 +30,7 @@ void log_printf(const char *fmt, ...)
     kernel_vsprintf(str_buf, fmt, args);
     va_end(args);
 
-    irq_state_t state = irq_enter_protection();
+    mutex_lock(&mutex);
 
     const char *p = str_buf;
     while (*p != '\0')
@@ -40,5 +44,5 @@ void log_printf(const char *fmt, ...)
     outb(COM1_PORT, '\r');
     outb(COM1_PORT, '\n');
 
-    irq_leave_protection(state);
+    mutex_unlock(&mutex);
 }

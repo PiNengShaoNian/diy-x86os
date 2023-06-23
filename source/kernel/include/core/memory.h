@@ -7,8 +7,10 @@
 #include "comm/boot_info.h"
 
 #define MEM_EXT_START (1024 * 1024)
+#define MEM_EXT_END (127 * 1024 * 1024)
 #define MEM_PAGE_SIZE 4096
 #define MEM_EBDA_START 0x80000
+#define MEMORY_TASK_BASE 0x80000000
 
 typedef struct _addr_alloc_t
 {
@@ -28,5 +30,7 @@ typedef struct _memory_map_t
 } memory_map_t;
 
 void memory_init(boot_info_t *boot_info);
+
+uint32_t memory_create_uvm(void);
 
 #endif

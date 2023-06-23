@@ -6,6 +6,10 @@
 #include "ipc/mutex.h"
 #include "comm/boot_info.h"
 
+#define MEM_EXT_START (1024 * 1024)
+#define MEM_PAGE_SIZE 4096
+#define MEM_EBDA_START 0x80000
+
 typedef struct _addr_alloc_t
 {
     mutex_t mutex;

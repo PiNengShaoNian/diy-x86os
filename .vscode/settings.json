@@ -19,6 +19,8 @@
         "log.h": "c",
         "stdarg.h": "c",
         "klib.h": "c",
-        "list.h": "c"
+        "list.h": "c",
+        "memory.h": "c",
+        "bitmap.h": "c"
     },
 }

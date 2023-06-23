@@ -21,6 +21,7 @@
         "klib.h": "c",
         "list.h": "c",
         "memory.h": "c",
-        "bitmap.h": "c"
+        "bitmap.h": "c",
+        "mmu.h": "c"
     },
 }

@@ -25,18 +25,12 @@ void kernel_init(boot_info_t *boot_info)
     task_manager_init();
 }
 
-static task_t first_task;
-static uint32_t init_task_stack[1024];
-static task_t init_task;
-
-void init_task_entry(void)
+void move_to_first_task(void)
 {
-    int count = 0;
-    for (;;)
-    {
-        log_printf("init task: %d", count++);
-        sys_sleep(1000);
-    }
+    task_t *curr = task_current();
+    ASSERT(curr != 0);
+    tss_t *tss = &(curr->tss);
+    __asm__ __volatile__("jmp *%[ip]" ::[ip] "r"(tss->eip));
 }
 
 void init_main()
@@ -45,14 +39,6 @@ void init_main()
     log_printf("Version: %s %s", OS_VERSION, "diy x86-os");
     log_printf("%d %d %x %c 0x%x", -123, 123456, 0x12345, 'a', 15);
 
-    task_init(&init_task, "init task", (uint32_t)init_task_entry, (uint32_t)&init_task_stack[1024]);
     task_first_init();
-
-    irq_enable_global();
-    int count = 0;
-    for (;;)
-    {
-        log_printf("main task: %d", count++);
-        sys_sleep(1000);
-    }
+    move_to_first_task();
 }

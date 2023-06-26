@@ -45,6 +45,9 @@ typedef struct _task_manager_t
 
     task_t first_task;
     task_t idle_task;
+
+    int app_code_sel;
+    int app_data_sel;
 } task_manager_t;
 
 void task_manager_init(void);

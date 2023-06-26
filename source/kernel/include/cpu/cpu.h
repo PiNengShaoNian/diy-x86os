@@ -61,6 +61,9 @@ typedef struct _tss_t
 #define GATE_DPL0 (0 << 13)      // 特权级0，最高特权级
 #define GATE_DPL3 (3 << 13)      // 特权级3，最低权限
 
+#define SEG_RPL0 (0 << 0)
+#define SEG_RPL3 (3 << 0)
+
 void segment_desc_set(int selector, uint32_t base,
                       uint32_t limit, uint16_t attr);
 

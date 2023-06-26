@@ -26,12 +26,25 @@
 
 #define IRQ0_TIMER 0x20
 
+#define ERR_PAGE_P (1 << 0)
+#define ERR_PAGE_WR (1 << 1)
+#define ERR_PAGE_US (1 << 1)
+
+#define ERR_EXT (1 << 0)
+#define ERR_IDT (1 << 1)
+
+/**
+ * 中断发生时相应的栈结构，暂时为无特权级发生的情况
+ */
 typedef struct _exception_frame_t
 {
-    uint32_t gs, fs, es, ds;
-    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-    uint32_t num, error_code;
-    uint32_t eip, cs, eflags;
+    // 结合压栈的过程，以及pusha指令的实际压入过程
+    int gs, fs, es, ds;
+    int edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    int num;
+    int error_code;
+    int eip, cs, eflags;
+    int esp3, ss3;
 } exception_frame_t;
 
 typedef void (*irq_handler_t)(void);

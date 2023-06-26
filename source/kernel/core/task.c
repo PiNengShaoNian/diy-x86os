@@ -32,7 +32,8 @@ static int tss_init(task_t *task, uint32_t entry, uint32_t esp)
 
     task->tss.eip = entry;
     task->tss.esp = task->tss.esp0 = esp;
-    task->tss.ss = task->tss.ss0 = data_sel;
+    task->tss.ss0 = KERNEL_SELECTOR_DS;
+    task->tss.ss = data_sel;
     task->tss.es = task->tss.ds = task->tss.fs = task->tss.gs = data_sel;
     task->tss.cs = code_sel;
     task->tss.eflags = EFLAGS_IF | EFLAGS_DEFAULT;

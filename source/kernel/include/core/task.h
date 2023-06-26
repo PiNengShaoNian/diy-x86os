@@ -8,6 +8,8 @@
 #define TASK_NAME_SIZE 32
 #define TASK_TIME_SLICE_DEFAULT 10
 
+#define TASK_FLAGS_SYSTEM (1 << 0)
+
 typedef struct _task_t
 {
     // uint32_t *stack;
@@ -32,7 +34,7 @@ typedef struct _task_t
     int tss_sel;
 } task_t;
 
-int task_init(task_t *task, const char *name, uint32_t entry, uint32_t esp);
+int task_init(task_t *task, const char *name, int flag, uint32_t entry, uint32_t esp);
 
 void task_switch_from_to(task_t *from, task_t *to);
 

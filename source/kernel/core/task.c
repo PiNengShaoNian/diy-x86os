@@ -113,7 +113,7 @@ void task_first_init(void)
 
     mmu_set_page_dir(task_manager.first_task.tss.cr3);
 
-    memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W);
+    memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W | PTE_U);
     kernel_memcpy((void *)first_start, s_first_task, copy_size);
 }
 

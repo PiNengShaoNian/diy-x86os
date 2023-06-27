@@ -26,6 +26,10 @@ static int tss_init(task_t *task, int flag, uint32_t entry, uint32_t esp)
 
     kernel_memset(&task->tss, 0, sizeof(tss_t));
 
+    uint32_t kernel_stack = memory_alloc_page();
+    if (kernel_stack == 0)
+        goto tss_init_failed;
+
     int code_sel, data_sel;
     if (flag & TASK_FLAGS_SYSTEM)
     {
@@ -39,7 +43,8 @@ static int tss_init(task_t *task, int flag, uint32_t entry, uint32_t esp)
     }
 
     task->tss.eip = entry;
-    task->tss.esp = task->tss.esp0 = esp;
+    task->tss.esp = esp;
+    task->tss.esp0 = kernel_stack + MEM_PAGE_SIZE;
     task->tss.ss0 = KERNEL_SELECTOR_DS;
     task->tss.ss = data_sel;
     task->tss.es = task->tss.ds = task->tss.fs = task->tss.gs = data_sel;
@@ -49,12 +54,19 @@ static int tss_init(task_t *task, int flag, uint32_t entry, uint32_t esp)
     if (page_dir == 0)
     {
         gdt_free_sel(tss_sel);
-        return -1;
+        goto tss_init_failed;
     }
     task->tss.cr3 = page_dir;
 
     task->tss_sel = tss_sel;
     return 0;
+
+tss_init_failed:
+    gdt_free_sel(tss_sel);
+    if (kernel_stack)
+        memory_free_page(kernel_stack);
+
+    return -1;
 }
 
 void task_set_ready(task_t *task)
@@ -107,7 +119,7 @@ void task_first_init(void)
 
     uint32_t first_start = (uint32_t)first_task_entry;
 
-    task_init(&task_manager.first_task, "first task", 0, first_start, 0);
+    task_init(&task_manager.first_task, "first task", 0, first_start, first_task_entry + alloc_size);
     write_tr(task_manager.first_task.tss_sel);
     task_manager.curr_task = &task_manager.first_task;
 

@@ -60,6 +60,7 @@ typedef struct _tss_t
 #define GATE_P_PRESENT (1 << 15) // 是否存在
 #define GATE_DPL0 (0 << 13)      // 特权级0，最高特权级
 #define GATE_DPL3 (3 << 13)      // 特权级3，最低权限
+#define GATE_TYPE_SYSCALL (0xC << 8) // 调用门
 
 #define SEG_RPL0 (0 << 0)
 #define SEG_RPL3 (3 << 0)

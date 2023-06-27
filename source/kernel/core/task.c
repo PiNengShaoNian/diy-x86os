@@ -119,7 +119,7 @@ void task_first_init(void)
 
     uint32_t first_start = (uint32_t)first_task_entry;
 
-    task_init(&task_manager.first_task, "first task", 0, first_start, first_task_entry + alloc_size);
+    task_init(&task_manager.first_task, "first task", 0, first_start, (uint32_t)first_task_entry + alloc_size);
     write_tr(task_manager.first_task.tss_sel);
     task_manager.curr_task = &task_manager.first_task;
 

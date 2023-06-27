@@ -100,3 +100,7 @@ simple_switch:
     pop %ebp
 
     ret
+
+    .global exception_handler_syscall
+exception_handler_syscall:
+    ret

@@ -4,6 +4,8 @@
 
 int first_task_main(void)
 {
+    int pid = getpid();
+
     for (;;)
     {
         msleep(1000);

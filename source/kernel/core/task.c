@@ -86,6 +86,7 @@ int task_init(task_t *task, const char *name, int flag, uint32_t entry, uint32_t
 
     kernel_strncpy(task->name, name, TASK_NAME_SIZE);
     task->state = TASK_CRATED;
+    task->pid = (uint32_t)task;
     task->sleep_ticks = 0;
     task->time_ticks = TASK_TIME_SLICE_DEFAULT;
     task->slice_ticks = task->time_ticks;
@@ -272,4 +273,10 @@ void sys_sleep(uint32_t ms)
     task_set_sleep(task_manager.curr_task, (ms + (OS_TICKS_MS - 1)) / OS_TICKS_MS);
     task_dispatch();
     irq_leave_protection(state);
+}
+
+int sys_getpid(void)
+{
+    task_t *task = task_current();
+    return task->pid;
 }

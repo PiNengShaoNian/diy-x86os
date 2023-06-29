@@ -6,6 +6,7 @@
 #define SYS_msleep 0
 #define SYS_sleep 0
 #define SYS_getpid 1
+#define SYS_printmsg 2
 
 void exception_handler_syscall(void);
 

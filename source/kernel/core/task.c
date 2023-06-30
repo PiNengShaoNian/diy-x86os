@@ -7,6 +7,7 @@
 #include "comm/cpu_instr.h"
 #include "cpu/irq.h"
 #include "core/memory.h"
+#include "core/syscall.h"
 #include "cpu/mmu.h"
 
 static uint32_t idle_task_stack[IDLE_TASK_STACK_SIZE];
@@ -71,6 +72,32 @@ tss_init_failed:
     return -1;
 }
 
+static task_t *alloc_task(void)
+{
+    task_t *task = (task_t *)0;
+
+    mutex_lock(&task_table_mutex);
+    for (int i = 0; i < TASK_NR; i++)
+    {
+        task_t *curr = task_table + i;
+        if (curr->name[0] == '\0')
+        {
+            task = curr;
+            break;
+        }
+    }
+    mutex_unlock(&task_table_mutex);
+
+    return task;
+}
+
+static void free_task(task_t *task)
+{
+    mutex_lock(&task_table_mutex);
+    task->name[0] = '\0';
+    mutex_unlock(&task_table_mutex);
+}
+
 void task_set_ready(task_t *task)
 {
     if (task == &task_manager.idle_task)
@@ -103,6 +130,21 @@ int task_init(task_t *task, const char *name, int flag, uint32_t entry, uint32_t
     irq_leave_protection(state);
 
     return 0;
+}
+
+void task_uninit(task_t *task)
+{
+    if (task->tss_sel)
+        gdt_free_sel(task->tss_sel);
+
+    if (task->tss.esp0)
+        memory_free_page(task->tss.esp0 - MEM_PAGE_SIZE);
+
+    if (task->tss.cr3)
+    {
+    }
+
+    kernel_memset(task, 0, sizeof(task_t));
 }
 
 void simple_switch(uint32_t **from, uint32_t *to);
@@ -289,31 +331,42 @@ int sys_getpid(void)
 
 int sys_fork(void)
 {
-    return -1;
-}
+    task_t *parent_task = task_current();
 
-static task_t *alloc_task(void)
-{
-    task_t *task = (task_t *)0;
+    task_t *child_task = alloc_task();
+    if (child_task == (task_t *)0)
+        goto fork_failed;
 
-    mutex_lock(&task_table_mutex);
-    for (int i = 0; i < TASK_NR; i++)
+    syscall_frame_t *frame = (syscall_frame_t *)(parent_task->tss.esp0 - sizeof(syscall_frame_t));
+
+    int err = task_init(child_task, parent_task->name, 0, frame->eip, frame->esp + sizeof(uint32_t) * SYSCALL_PARAM_COUNT);
+    if (err < 0)
+        goto fork_failed;
+
+    tss_t *tss = &child_task->tss;
+    tss->eax = 0;
+    tss->ebx = frame->ebx;
+    tss->ecx = frame->ecx;
+    tss->edx = frame->edx;
+    tss->esi = frame->esi;
+    tss->edi = frame->edi;
+    tss->ebp = frame->ebp;
+
+    tss->cs = frame->cs;
+    tss->ds = frame->ds;
+    tss->es = frame->es;
+    tss->fs = frame->fs;
+    tss->gs = frame->gs;
+    tss->eflags = frame->eflags;
+
+    child_task->parent = parent_task;
+    tss->cr3 = parent_task->tss.cr3;
+    return child_task->pid;
+fork_failed:
+    if (child_task)
     {
-        task_t *curr = task_table + i;
-        if (curr->name[0] == '\0')
-        {
-            task = curr;
-            break;
-        }
+        task_uninit(child_task);
+        free_task(child_task);
     }
-    mutex_unlock(&task_table_mutex);
-
-    return task;
-}
-
-static void free_task(task_t *task)
-{
-    mutex_lock(&task_table_mutex);
-    task->name[0] = '\0';
-    mutex_unlock(&task_table_mutex);
+    return -1;
 }

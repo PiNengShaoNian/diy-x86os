@@ -280,3 +280,8 @@ int sys_getpid(void)
     task_t *task = task_current();
     return task->pid;
 }
+
+int sys_fork(void)
+{
+    return -1;
+}

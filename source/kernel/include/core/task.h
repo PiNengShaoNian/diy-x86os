@@ -74,5 +74,6 @@ void task_set_sleep(task_t *task, uint32_t ticks);
 void task_set_wakeup(task_t *task);
 void sys_sleep(uint32_t ms);
 int sys_getpid(void);
+int sys_fork(void);
 
 #endif

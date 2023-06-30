@@ -65,4 +65,12 @@ static inline void print_msg(const char *fmt, int arg)
     sys_call(&args);
 }
 
+static inline int fork(void)
+{
+    syscall_args_t args;
+    args.id = SYS_fork;
+
+    return sys_call(&args);
+}
+
 #endif

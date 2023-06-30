@@ -12,6 +12,7 @@ void sys_print_msg(char *fmt, int arg)
 static const syscall_handler_t sys_table[] = {
     [SYS_sleep] = (syscall_handler_t)sys_sleep,
     [SYS_getpid] = (syscall_handler_t)sys_getpid,
+    [SYS_fork] = (syscall_handler_t)sys_fork,
     [SYS_printmsg] = (syscall_handler_t)sys_print_msg,
 };
 

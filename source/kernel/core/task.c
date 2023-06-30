@@ -11,6 +11,8 @@
 
 static uint32_t idle_task_stack[IDLE_TASK_STACK_SIZE];
 static task_manager_t task_manager;
+static task_t task_table[TASK_NR];
+static mutex_t task_table_mutex;
 
 static int tss_init(task_t *task, int flag, uint32_t entry, uint32_t esp)
 {
@@ -88,6 +90,7 @@ int task_init(task_t *task, const char *name, int flag, uint32_t entry, uint32_t
     task->state = TASK_CRATED;
     task->pid = (uint32_t)task;
     task->sleep_ticks = 0;
+    task->parent = (task_t *)0;
     task->time_ticks = TASK_TIME_SLICE_DEFAULT;
     task->slice_ticks = task->time_ticks;
     list_node_init(&task->all_node);
@@ -143,6 +146,9 @@ static void idle_task(void)
 
 void task_manager_init(void)
 {
+    kernel_memset(task_table, 0, sizeof(task_table));
+    mutex_init(&task_table_mutex);
+
     int sel = gdt_alloc_desc();
     segment_desc_set(sel, 0x00000000, 0xFFFFFFFF,
                      SEG_P_PRESENT | SEG_DPL3 |
@@ -284,4 +290,30 @@ int sys_getpid(void)
 int sys_fork(void)
 {
     return -1;
+}
+
+static task_t *alloc_task(void)
+{
+    task_t *task = (task_t *)0;
+
+    mutex_lock(&task_table_mutex);
+    for (int i = 0; i < TASK_NR; i++)
+    {
+        task_t *curr = task_table + i;
+        if (curr->name[0] == '\0')
+        {
+            task = curr;
+            break;
+        }
+    }
+    mutex_unlock(&task_table_mutex);
+
+    return task;
+}
+
+static void free_task(task_t *task)
+{
+    mutex_lock(&task_table_mutex);
+    task->name[0] = '\0';
+    mutex_unlock(&task_table_mutex);
 }

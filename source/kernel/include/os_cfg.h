@@ -14,4 +14,6 @@
 
 #define IDLE_TASK_STACK_SIZE 1024
 
+#define TASK_NR 128
+
 #endif

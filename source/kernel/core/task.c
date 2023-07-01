@@ -373,7 +373,39 @@ fork_failed:
     return -1;
 }
 
+static uint32_t load_elf_file(task_t *task, const char *name, uint32_t page_dir)
+{
+    return 0;
+}
+
 int sys_execve(char *name, char **argv, char **env)
 {
+    task_t *task = task_current();
+
+    uint32_t old_page_dir = task->tss.cr3;
+
+    uint32_t new_page_dir = memory_create_uvm();
+    if (!new_page_dir)
+        goto exec_failed;
+
+    uint32_t entry = load_elf_file(task, name, new_page_dir);
+    if (entry == 0)
+        goto exec_failed;
+
+    task->tss.cr3 = new_page_dir;
+    mmu_set_page_dir(new_page_dir);
+
+    memory_destroy_uvm(old_page_dir);
+
+    return 0;
+
+exec_failed:
+    if (new_page_dir)
+    {
+        task->tss.cr3 = old_page_dir;
+        mmu_set_page_dir(old_page_dir);
+
+        memory_destroy_uvm(new_page_dir);
+    }
     return -1;
 }

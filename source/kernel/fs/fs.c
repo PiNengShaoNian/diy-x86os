@@ -1,6 +1,8 @@
 #include "fs/fs.h"
-#include "comm/types.h"
 #include "tools/klib.h"
+#include "comm/types.h"
+#include "comm/boot_info.h"
+#include "comm/cpu_instr.h"
 
 static uint8_t TEMP_ADDR[100 * 1024];
 static uint8_t *temp_pos;
@@ -37,10 +39,10 @@ static void read_disk(uint32_t sector, int sector_count, uint8_t *buf)
 
 int sys_open(const char *name, int flags, ...)
 {
-    iif(name[0] == '/')
+    if (name[0] == '/')
     {
         read_disk(5000, 80, (uint8_t *)TEMP_ADDR);
-        temp_pos = (uint_t *)TEMP_ADDR;
+        temp_pos = (uint8_t *)TEMP_ADDR;
         return TEMP_FILE_ID;
     }
 

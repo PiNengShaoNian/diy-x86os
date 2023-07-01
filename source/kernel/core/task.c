@@ -5,10 +5,12 @@
 #include "cpu/cpu.h"
 #include "tools/log.h"
 #include "comm/cpu_instr.h"
+#include "comm/elf.h"
 #include "cpu/irq.h"
 #include "core/memory.h"
 #include "core/syscall.h"
 #include "cpu/mmu.h"
+#include "fs/fs.h"
 
 static uint32_t idle_task_stack[IDLE_TASK_STACK_SIZE];
 static task_manager_t task_manager;
@@ -373,9 +375,102 @@ fork_failed:
     return -1;
 }
 
+static int load_phdr(int file, Elf32_Phdr *phdr, uint32_t page_dir)
+{
+    int err = memory_alloc_for_page_dir(page_dir, phdr->p_vaddr, phdr->p_memsz, PTE_P | PTE_U | PTE_W);
+    if (err < 0)
+    {
+        log_printf("no memory");
+        return -1;
+    }
+
+    if (sys_lseek(file, phdr->p_offset, 0) < 0)
+    {
+        log_printf("read file failed");
+        return -1;
+    }
+
+    uint32_t vaddr = phdr->p_vaddr;
+    uint32_t size = phdr->p_filesz;
+    while (size > 0)
+    {
+        int curr_size = (size > MEM_PAGE_SIZE) ? MEM_PAGE_SIZE : size;
+        uint32_t paddr = memory_get_paddr(page_dir, vaddr);
+
+        if (sys_read(file, (char *)paddr, curr_size) < curr_size)
+        {
+            log_printf("read file failed.");
+            return -1;
+        }
+
+        size -= curr_size;
+        vaddr += curr_size;
+    }
+}
+
 static uint32_t load_elf_file(task_t *task, const char *name, uint32_t page_dir)
 {
-    return 0;
+    Elf32_Ehdr elf_hdr;
+    Elf32_Phdr elf_phdr;
+
+    int file = sys_open(name, 0);
+    if (file < 0)
+    {
+        log_printf("open failed. %s", name);
+        goto load_failed;
+    }
+
+    int cnt = sys_read(file, (char *)&elf_hdr, sizeof(elf_hdr));
+    if (cnt < sizeof(elf_hdr))
+    {
+        log_printf("elf hdr too small, size=%d", cnt);
+        goto load_failed;
+    }
+
+    if (elf_hdr.e_ident[0] != 0x7f ||
+        elf_hdr.e_ident[1] != 'E' ||
+        elf_hdr.e_ident[2] != 'L' ||
+        elf_hdr.e_ident[3] != 'F')
+    {
+        log_printf("check elf ident failed.");
+        goto load_failed;
+    }
+
+    uint32_t e_phoff = elf_hdr.e_phoff;
+    for (int i = 0; i < elf_hdr.e_phnum; i++, e_phoff += elf_hdr.e_phentsize)
+    {
+        if (sys_lseek(file, e_phoff, 0) < 0)
+        {
+            log_printf("read file failed.");
+            goto load_failed;
+        }
+
+        cnt = sys_read(file, (char *)&elf_phdr, sizeof(elf_phdr));
+        if (cnt < sizeof(elf_phdr))
+        {
+            log_printf("read file failed.");
+            goto load_failed;
+        }
+
+        if (elf_phdr.p_type != 1 || elf_phdr.p_vaddr < MEMORY_TASK_BASE)
+            continue;
+
+        int err = load_phdr(file, &elf_phdr, page_dir);
+        if (err < 0)
+        {
+            log_printf("load program failed.s");
+            goto load_failed;
+        }
+    }
+
+    sys_close(file);
+    return elf_hdr.e_entry;
+
+load_failed:
+    if (file)
+        sys_close(file);
+
+    return -1;
 }
 
 int sys_execve(char *name, char **argv, char **env)

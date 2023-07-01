@@ -76,5 +76,6 @@ void task_set_wakeup(task_t *task);
 void sys_sleep(uint32_t ms);
 int sys_getpid(void);
 int sys_fork(void);
+int sys_execve(char *name, char **argv, char **env);
 
 #endif

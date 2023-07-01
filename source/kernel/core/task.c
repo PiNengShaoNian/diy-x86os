@@ -109,7 +109,8 @@ void task_set_ready(task_t *task)
     task->state = TASK_READY;
 }
 
-int task_init(task_t *task, const char *name, int flag, uint32_t entry, uint32_t esp)
+int task_init(task_t *task, const char *name, int flag,
+              uint32_t entry, uint32_t esp)
 {
     ASSERT(task != (task_t *)0);
 
@@ -127,11 +128,17 @@ int task_init(task_t *task, const char *name, int flag, uint32_t entry, uint32_t
     list_node_init(&task->wait_node);
 
     irq_state_t state = irq_enter_protection();
-    task_set_ready(task);
     list_insert_last(&task_manager.task_list, &task->all_node);
     irq_leave_protection(state);
 
     return 0;
+}
+
+void task_start(task_t *task)
+{
+    irq_state_t state = irq_enter_protection();
+    task_set_ready(task);
+    irq_leave_protection(state);
 }
 
 void task_uninit(task_t *task)
@@ -174,6 +181,7 @@ void task_first_init(void)
 
     memory_alloc_page_for(first_start, alloc_size, PTE_P | PTE_W | PTE_U);
     kernel_memcpy((void *)first_start, s_first_task, copy_size);
+    task_start(&task_manager.first_task);
 }
 
 task_t *task_first_task(void)
@@ -213,6 +221,7 @@ void task_manager_init(void)
               TASK_FLAGS_SYSTEM,
               (uint32_t)idle_task,
               (uint32_t)(&idle_task_stack[IDLE_TASK_STACK_SIZE]));
+    task_start(&task_manager.idle_task);
 }
 
 void task_set_block(task_t *task)
@@ -238,7 +247,7 @@ task_t *task_current(void)
     return task_manager.curr_task;
 }
 
-int sys_sched_yield(void)
+int sys_yield(void)
 {
     irq_state_t state = irq_enter_protection();
 
@@ -365,6 +374,7 @@ int sys_fork(void)
     if ((tss->cr3 = memory_copy_uvm(parent_task->tss.cr3)) < 0)
         goto fork_failed;
 
+    task_start(child_task);
     return child_task->pid;
 fork_failed:
     if (child_task)

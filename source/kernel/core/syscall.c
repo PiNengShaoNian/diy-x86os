@@ -14,6 +14,7 @@ static const syscall_handler_t sys_table[] = {
     [SYS_getpid] = (syscall_handler_t)sys_getpid,
     [SYS_fork] = (syscall_handler_t)sys_fork,
     [SYS_execve] = (syscall_handler_t)sys_execve,
+    [SYS_yield] = (syscall_handler_t)sys_yield,
     [SYS_printmsg] = (syscall_handler_t)sys_print_msg,
 };
 

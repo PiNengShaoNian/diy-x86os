@@ -8,6 +8,7 @@
 #define SYS_getpid 1
 #define SYS_fork 2
 #define SYS_execve 3
+#define SYS_yield 4
 #define SYS_printmsg 100
 
 void exception_handler_syscall(void);

@@ -141,8 +141,7 @@ void task_uninit(task_t *task)
         memory_free_page(task->tss.esp0 - MEM_PAGE_SIZE);
 
     if (task->tss.cr3)
-    {
-    }
+        memory_destroy_uvm(task->tss.cr3);
 
     kernel_memset(task, 0, sizeof(task_t));
 }
@@ -360,7 +359,10 @@ int sys_fork(void)
     tss->eflags = frame->eflags;
 
     child_task->parent = parent_task;
-    tss->cr3 = parent_task->tss.cr3;
+
+    if ((tss->cr3 = memory_copy_uvm(parent_task->tss.cr3)) < 0)
+        goto fork_failed;
+
     return child_task->pid;
 fork_failed:
     if (child_task)

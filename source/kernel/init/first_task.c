@@ -16,10 +16,12 @@ int first_task_main(void)
     }
     else if (pid == 0)
     {
+        count += 3;
         print_msg("child: %d\n", count);
     }
     else
     {
+        count += 1;
         print_msg("child task id=%d\n", pid);
         print_msg("parent: %d\n", count);
     }

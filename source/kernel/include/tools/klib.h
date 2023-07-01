@@ -36,4 +36,7 @@ void kernel_vsprintf(char *buf, const char *fmt, va_list args);
 void panic(const char *file, int line, const char *func, const char *expr);
 #endif
 
+int strings_count(char **start);
+char *get_file_name(const char *name);
+
 #endif

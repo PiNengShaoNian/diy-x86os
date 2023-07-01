@@ -10,6 +10,13 @@
 
 #define TASK_FLAGS_SYSTEM (1 << 0)
 
+typedef struct _task_args_t
+{
+    uint32_t ret_addr;
+    uint32_t argc;
+    char **argv;
+} task_args_t;
+
 typedef struct _task_t
 {
     // uint32_t *stack;

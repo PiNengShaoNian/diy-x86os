@@ -473,9 +473,38 @@ load_failed:
     return -1;
 }
 
+static int copy_args(char *to, uint32_t page_dir, int argc, char **argv)
+{
+    task_args_t task_args;
+    task_args.argc = argc;
+    task_args.argv = (char **)(to + sizeof(task_args_t));
+
+    char *dest_arg = to + sizeof(task_args_t) + sizeof(char *) * argc;
+    char **dest_arg_tb = (char **)memory_get_paddr(page_dir, (uint32_t)(to + sizeof(task_args_t)));
+    for (int i = 0; i < argc; i++)
+    {
+        char *from = argv[i];
+        int len = kernel_strlen(from) + 1;
+        int err = memory_copy_uvm_data((uint32_t)dest_arg,
+                                       page_dir,
+                                       (uint32_t)from,
+                                       len);
+        ASSERT(err >= 0);
+        dest_arg_tb[i] = dest_arg;
+        dest_arg += len;
+    }
+
+    return memory_copy_uvm_data((uint32_t)to,
+                                page_dir,
+                                (uint32_t)&task_args,
+                                sizeof(task_args));
+}
+
 int sys_execve(char *name, char **argv, char **env)
 {
     task_t *task = task_current();
+
+    kernel_strcpy(task->name, get_file_name(name));
 
     uint32_t old_page_dir = task->tss.cr3;
 
@@ -487,11 +516,16 @@ int sys_execve(char *name, char **argv, char **env)
     if (entry == 0)
         goto exec_failed;
 
-    uint32_t stack_top = MEM_TASK_STACK_TOP;
+    uint32_t stack_top = MEM_TASK_STACK_TOP - MEM_TASK_ARG_SIZE;
     int err = memory_alloc_for_page_dir(new_page_dir,
                                         MEM_TASK_STACK_TOP - MEM_TASK_STACK_SIZE,
                                         MEM_TASK_STACK_SIZE,
                                         PTE_P | PTE_U | PTE_W);
+    if (err < 0)
+        goto exec_failed;
+
+    int argc = strings_count(argv);
+    err = copy_args((char *)stack_top, new_page_dir, argc, argv);
     if (err < 0)
         goto exec_failed;
 

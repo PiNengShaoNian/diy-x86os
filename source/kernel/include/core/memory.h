@@ -14,6 +14,7 @@
 
 #define MEM_TASK_STACK_TOP 0xE0000000
 #define MEM_TASK_STACK_SIZE (MEM_PAGE_SIZE * 500)
+#define MEM_TASK_ARG_SIZE (MEM_PAGE_SIZE * 4)
 
 typedef struct _addr_alloc_t
 {
@@ -49,4 +50,8 @@ uint32_t memory_copy_uvm(uint32_t page_dir);
 
 uint32_t memory_get_paddr(uint32_t page_dir, uint32_t vaddr);
 
+int memory_copy_uvm_data(uint32_t to,
+                         uint32_t page_dir,
+                         uint32_t from,
+                         uint32_t size);
 #endif

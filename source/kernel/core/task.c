@@ -487,6 +487,21 @@ int sys_execve(char *name, char **argv, char **env)
     if (entry == 0)
         goto exec_failed;
 
+    uint32_t stack_top = MEM_TASK_STACK_TOP;
+    int err = memory_alloc_for_page_dir(new_page_dir,
+                                        MEM_TASK_STACK_TOP - MEM_TASK_STACK_SIZE,
+                                        MEM_TASK_STACK_SIZE,
+                                        PTE_P | PTE_U | PTE_W);
+    if (err < 0)
+        goto exec_failed;
+
+    syscall_frame_t *frame = (syscall_frame_t *)(task->tss.esp0 - sizeof(syscall_frame_t));
+    frame->eip = entry;
+    frame->eax = frame->ebx = frame->ecx = frame->edx = 0;
+    frame->esi = frame->edi = frame->ebp = 0;
+    frame->eflags = EFLAGS_IF | EFLAGS_DEFAULT;
+    frame->esp = stack_top - sizeof(uint32_t) * SYSCALL_PARAM_COUNT;
+
     task->tss.cr3 = new_page_dir;
     mmu_set_page_dir(new_page_dir);
 

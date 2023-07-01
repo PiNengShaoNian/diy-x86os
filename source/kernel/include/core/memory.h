@@ -12,6 +12,9 @@
 #define MEM_EBDA_START 0x80000
 #define MEMORY_TASK_BASE 0x80000000
 
+#define MEM_TASK_STACK_TOP 0xE0000000
+#define MEM_TASK_STACK_SIZE (MEM_PAGE_SIZE * 500)
+
 typedef struct _addr_alloc_t
 {
     mutex_t mutex;

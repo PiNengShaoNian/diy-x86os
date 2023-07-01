@@ -3,6 +3,7 @@
 
 #include "core/syscall.h"
 #include "os_cfg.h"
+#include "comm/types.h"
 
 typedef struct _syscall_args_t
 {

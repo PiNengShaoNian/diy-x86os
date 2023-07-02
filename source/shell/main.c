@@ -3,12 +3,9 @@
 
 int main(int argc, char **argv)
 {
-    sbrk(0);
-    sbrk(100);
-    sbrk(200);
-    sbrk(4096 * 2 + 200);
-    sbrk(4096 * 5 + 1234);
     printf("Hello from shell\n");
+    printf("os version: %s\n", "1.0.0");
+    printf("%d %d %d\n", 1, 2, 3);
 
     for (int i = 0; i < argc; i++)
     {

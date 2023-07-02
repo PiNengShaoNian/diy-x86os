@@ -1,6 +1,7 @@
 #include "core/syscall.h"
 #include "core/task.h"
 #include "tools/log.h"
+#include "fs/fs.h"
 
 typedef int (*syscall_handler_t)(uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3);
 
@@ -16,6 +17,12 @@ static const syscall_handler_t sys_table[] = {
     [SYS_execve] = (syscall_handler_t)sys_execve,
     [SYS_yield] = (syscall_handler_t)sys_yield,
     [SYS_printmsg] = (syscall_handler_t)sys_print_msg,
+
+    [SYS_open] = (syscall_handler_t)sys_open,
+    [SYS_read] = (syscall_handler_t)sys_read,
+    [SYS_write] = (syscall_handler_t)sys_write,
+    [SYS_close] = (syscall_handler_t)sys_close,
+    [SYS_lseek] = (syscall_handler_t)sys_lseek,
 };
 
 void do_handler_syscall(syscall_frame_t *frame)

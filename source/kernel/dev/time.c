@@ -17,7 +17,7 @@ void do_handler_time(exception_frame_t *frame)
 
 static void init_pit(void)
 {
-    uint32_t reload_count = PIT_OSC_FREQ * OS_TICKS_MS / 1000;
+    uint32_t reload_count = PIT_OSC_FREQ * OS_TICK_MS / 1000;
     outb(PIT_COMMAND_MODE_PORT, PIT_CHANNLE0 | PIT_LOAD_LOHI | PIT_MODE3);
     outb(PIT_CHANNEL0_DATA_PORT, reload_count & 0xFF);
     outb(PIT_CHANNEL0_DATA_PORT, (reload_count >> 8) & 0xFF);

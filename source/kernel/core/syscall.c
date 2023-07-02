@@ -1,5 +1,6 @@
 #include "core/syscall.h"
 #include "core/task.h"
+#include "core/memory.h"
 #include "tools/log.h"
 #include "fs/fs.h"
 
@@ -11,7 +12,7 @@ void sys_print_msg(char *fmt, int arg)
 }
 
 static const syscall_handler_t sys_table[] = {
-    [SYS_sleep] = (syscall_handler_t)sys_sleep,
+    [SYS_msleep] = (syscall_handler_t)sys_msleep,
     [SYS_getpid] = (syscall_handler_t)sys_getpid,
     [SYS_fork] = (syscall_handler_t)sys_fork,
     [SYS_execve] = (syscall_handler_t)sys_execve,
@@ -23,6 +24,10 @@ static const syscall_handler_t sys_table[] = {
     [SYS_write] = (syscall_handler_t)sys_write,
     [SYS_close] = (syscall_handler_t)sys_close,
     [SYS_lseek] = (syscall_handler_t)sys_lseek,
+
+    [SYS_isatty] = (syscall_handler_t)sys_isatty,
+    [SYS_fstat] = (syscall_handler_t)sys_fstat,
+    [SYS_sbrk] = (syscall_handler_t)sys_sbrk,
 };
 
 void do_handler_syscall(syscall_frame_t *frame)

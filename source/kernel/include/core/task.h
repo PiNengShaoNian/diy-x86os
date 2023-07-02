@@ -68,6 +68,7 @@ void task_first_init(void);
 
 task_t *task_first_task(void);
 
+void sys_msleep(uint32_t ms);
 int sys_yield(void);
 
 task_t *task_current(void);
@@ -80,7 +81,6 @@ void task_set_ready(task_t *task);
 void task_set_block(task_t *task);
 void task_set_sleep(task_t *task, uint32_t ticks);
 void task_set_wakeup(task_t *task);
-void sys_sleep(uint32_t ms);
 int sys_getpid(void);
 int sys_fork(void);
 int sys_execve(char *name, char **argv, char **env);

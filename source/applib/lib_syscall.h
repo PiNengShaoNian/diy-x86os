@@ -3,7 +3,8 @@
 
 #include "core/syscall.h"
 #include "os_cfg.h"
-#include "comm/types.h"
+
+#include <sys/stat.h>
 
 typedef struct _syscall_args_t
 {
@@ -33,5 +34,9 @@ int read(int file, char *ptr, int len);
 int write(int file, char *ptr, int len);
 int close(int file);
 int lseek(int file, int ptr, int dir);
+
+int isatty(int file);
+int fstat(int file, struct stat *st);
+void *sbrk(ptrdiff_t incr);
 
 #endif

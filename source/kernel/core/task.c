@@ -100,6 +100,29 @@ static void free_task(task_t *task)
     mutex_unlock(&task_table_mutex);
 }
 
+/**
+ * @brief 任务进入睡眠状态
+ *
+ * @param ms
+ */
+void sys_msleep(uint32_t ms)
+{
+    // 至少延时1个tick
+    if (ms < OS_TICK_MS)
+        ms = OS_TICK_MS;
+
+    irq_state_t state = irq_enter_protection();
+
+    // 从就绪队列移除，加入睡眠队列
+    task_set_block(task_manager.curr_task);
+    task_set_sleep(task_manager.curr_task, (ms + (OS_TICK_MS - 1)) / OS_TICK_MS);
+
+    // 进行一次调度
+    task_dispatch();
+
+    irq_leave_protection(state);
+}
+
 void task_set_ready(task_t *task)
 {
     if (task == &task_manager.idle_task)
@@ -322,15 +345,6 @@ void task_set_sleep(task_t *task, uint32_t ticks)
 void task_set_wakeup(task_t *task)
 {
     list_remove(&task_manager.sleep_list, &task->run_node);
-}
-
-void sys_sleep(uint32_t ms)
-{
-    irq_state_t state = irq_enter_protection();
-    task_set_block(task_manager.curr_task);
-    task_set_sleep(task_manager.curr_task, (ms + (OS_TICKS_MS - 1)) / OS_TICKS_MS);
-    task_dispatch();
-    irq_leave_protection(state);
 }
 
 int sys_getpid(void)

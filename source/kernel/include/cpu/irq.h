@@ -25,6 +25,7 @@
 #define IRQ20_VE 20
 
 #define IRQ0_TIMER 0x20
+#define IRQ1_KEYBOARD 0x21
 
 #define ERR_PAGE_P (1 << 0)
 #define ERR_PAGE_WR (1 << 1)

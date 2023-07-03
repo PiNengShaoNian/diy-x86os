@@ -80,6 +80,7 @@ exception_handler smd_exception, 19, 0
 exception_handler virtual_exception, 20, 0
 
 exception_handler time, 0x20, 0
+exception_handler kbd, 0x21, 0
 
     // sample_switch(&from, to)
     .text

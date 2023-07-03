@@ -10,6 +10,7 @@
 #include "core/task.h"
 #include "tools/list.h"
 #include "core/memory.h"
+#include "dev/kbd.h"
 
 void kernel_init(boot_info_t *boot_info)
 {
@@ -25,6 +26,8 @@ void kernel_init(boot_info_t *boot_info)
     time_init();
 
     task_manager_init();
+
+    kbd_init();
 }
 
 void move_to_first_task(void)

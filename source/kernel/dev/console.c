@@ -105,6 +105,37 @@ static void clear_display(console_t *console)
     }
 }
 
+static int move_backward(console_t *console, int n)
+{
+    int status = -1;
+
+    for (int i = 0; i < n; i++)
+    {
+        if (console->cursor_col > 0)
+        {
+            console->cursor_col--;
+            status = 0;
+        }
+        else if (console->cursor_row > 0)
+        {
+            console->cursor_row--;
+            console->cursor_col = console->display_cols - 1;
+            status = 0;
+        }
+    }
+
+    return status;
+}
+
+static void erase_backward(console_t *console)
+{
+    if (move_backward(console, 1))
+    {
+        show_char(console, ' ');
+        move_backward(console, 1);
+    }
+}
+
 int console_init(void)
 {
     for (int i = 0; i < CONSOLE_NR; i++)
@@ -136,12 +167,23 @@ int console_write(int console_idx, char *data, int size)
         char ch = *data++;
         switch (ch)
         {
+        case 0x7F:
+            erase_backward(console);
+            break;
+        case '\b':
+            move_backward(console, 1);
+            break;
+        case '\r':
+            move_to_col0(console);
+            break;
         case '\n':
             move_to_col0(console);
             move_next_line(console);
             break;
         default:
-            show_char(console, ch);
+            if (ch >= ' ' && (ch <= '~'))
+                show_char(console, ch);
+            break;
         }
     }
 

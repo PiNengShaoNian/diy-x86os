@@ -3,6 +3,9 @@
 
 int main(int argc, char **argv)
 {
+    printf("abef\b\b\b\bcd\n");
+    printf("abcd\x7f;fg\n");
+
     printf("Hello from shell\n");
     printf("os version: %s\n", "1.0.0");
     printf("%d %d %d\n", 1, 2, 3);

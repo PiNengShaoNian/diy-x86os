@@ -8,6 +8,8 @@
 #define CONSOLE_ROW_MAX 25
 #define CONSOLE_COL_MAX 80
 
+#define ASCII_ESC 0x1b // \033
+
 typedef enum
 {
     COLOR_Black = 0,
@@ -41,12 +43,20 @@ typedef union _disp_char_t
 
 typedef struct _console_t
 {
+    enum
+    {
+        CONSOLE_WRITE_NORMAL,
+        CONSOLE_WRITE_ESC,
+    } write_state;
+
     disp_char_t *disp_base;
     int cursor_row, cursor_col;
     int display_rows;
     int display_cols;
     color_t foreground;
     color_t background;
+
+    int old_cursor_col, old_cursor_row;
 } console_t;
 
 int console_init(void);

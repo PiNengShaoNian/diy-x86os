@@ -5,6 +5,7 @@ int main(int argc, char **argv)
 {
     printf("abef\b\b\b\bcd\n");
     printf("abcd\x7f;fg\n");
+    printf("\0337hello, world!\03381234\n"); // 123o, world!
 
     printf("Hello from shell\n");
     printf("os version: %s\n", "1.0.0");

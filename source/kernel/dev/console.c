@@ -256,6 +256,46 @@ static void set_font_style(console_t *console)
     }
 }
 
+static void move_cursor(console_t *console)
+{
+    console->cursor_row = console->esc_param[0];
+    console->cursor_col = console->esc_param[1];
+}
+
+static void move_left(console_t *console, int n)
+{
+    if (n == 0)
+        n = 1;
+
+    int col = console->cursor_col - n;
+    console->cursor_col = (col >= 0) ? col : 0;
+}
+
+static void move_right(console_t *console, int n)
+{
+    if (n == 0)
+        n = 1;
+
+    int col = console->cursor_col + n;
+    if (col >= console->display_cols)
+        console->cursor_col = console->display_cols - 1;
+    else
+        console->cursor_col = col;
+}
+
+static void erase_in_display(console_t *console)
+{
+    if (console->curr_param_index < 0)
+        return;
+
+    int param = console->esc_param[0];
+    if (param == 2)
+    {
+        erase_rows(console, 0, console->display_rows);
+        console->cursor_col = console->cursor_row = 0;
+    }
+}
+
 static void write_esc_square(console_t *console, char c)
 {
     if (c >= '0' && c <= '9')
@@ -273,6 +313,19 @@ static void write_esc_square(console_t *console, char c)
         {
         case 'm':
             set_font_style(console);
+            break;
+        case 'D':
+            move_left(console, console->esc_param[0]);
+            break;
+        case 'C':
+            move_right(console, console->esc_param[0]);
+            break;
+        case 'H':
+        case 'f':
+            move_cursor(console);
+            break;
+        case 'J':
+            erase_in_display(console);
             break;
         default:
             break;

@@ -24,6 +24,7 @@
         "bitmap.h": "c",
         "mmu.h": "c",
         "syscall.h": "c",
-        "console.h": "c"
+        "console.h": "c",
+        "kbd.h": "c"
     },
 }

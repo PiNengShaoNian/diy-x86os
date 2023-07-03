@@ -152,6 +152,7 @@ int console_init(void)
         console->old_cursor_col = console->cursor_col;
         console->old_cursor_row = console->cursor_row;
         console->write_state = CONSOLE_WRITE_NORMAL;
+        console->curr_param_index = 0;
 
         console->disp_base = (disp_char_t *)CONSOLE_DISP_ADDR +
                              i * CONSOLE_ROW_MAX * CONSOLE_COL_MAX;
@@ -199,6 +200,14 @@ void restore_cursor(console_t *console)
     console->cursor_col = console->old_cursor_col;
 }
 
+static void clear_esc_param(console_t *console)
+{
+    kernel_memset(console->esc_param, 0, sizeof(console->esc_param));
+    console->curr_param_index = 0;
+}
+
+// ESC 7/8
+// ESC [
 static void write_esc(console_t *console, char ch)
 {
     switch (ch)
@@ -211,9 +220,65 @@ static void write_esc(console_t *console, char ch)
         restore_cursor(console);
         console->write_state = CONSOLE_WRITE_NORMAL;
         break;
+    case '[':
+        clear_esc_param(console);
+        console->write_state = CONSOLE_WRITE_SQUARE;
+        break;
     default:
         console->write_state = CONSOLE_WRITE_NORMAL;
         break;
+    }
+}
+
+static void set_font_style(console_t *console)
+{
+    static const color_t color_table[] = {
+        COLOR_Black,
+        COLOR_Red,
+        COLOR_Green,
+        COLOR_Yellow,
+        COLOR_Blue,
+        Color_Magenta,
+        COLOR_Cyan,
+        COLOR_White,
+    };
+    for (int i = 0; i <= console->curr_param_index; i++)
+    {
+        int param = console->esc_param[i];
+        if (param >= 30 && param <= 37)
+            console->foreground = color_table[param - 30];
+        else if (param >= 40 && param <= 47)
+            console->background = color_table[param - 40];
+        else if (param == 39)
+            console->foreground = COLOR_White;
+        else if (param == 49)
+            console->background = COLOR_Black;
+    }
+}
+
+static void write_esc_square(console_t *console, char c)
+{
+    if (c >= '0' && c <= '9')
+    {
+        int *param = &console->esc_param[console->curr_param_index];
+        *param = *param * 10 + c - '0';
+    }
+    else if (c == ';' && (console->curr_param_index < ESC_PARAM_MAX))
+    {
+        console->curr_param_index++;
+    }
+    else
+    {
+        switch (c)
+        {
+        case 'm':
+            set_font_style(console);
+            break;
+        default:
+            break;
+        }
+
+        console->write_state = CONSOLE_WRITE_NORMAL;
     }
 }
 
@@ -232,6 +297,9 @@ int console_write(int console_idx, char *data, int size)
             break;
         case CONSOLE_WRITE_ESC:
             write_esc(console, ch);
+            break;
+        case CONSOLE_WRITE_SQUARE:
+            write_esc_square(console, ch);
             break;
         default:
             break;

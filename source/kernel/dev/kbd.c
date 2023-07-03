@@ -96,6 +96,10 @@ static void do_normal_key(uint8_t raw_code)
     case KEY_LSHFIT:
         kbd_stat.lshift_press = is_make ? 1 : 0;
         break;
+    case KEY_CAPS:
+        if (is_make)
+            kbd_stat.caps_lock = ~kbd_stat.caps_lock;
+        break;
     default:
         if (is_make)
         {
@@ -103,6 +107,14 @@ static void do_normal_key(uint8_t raw_code)
                 key = map_table[key].func;
             else
                 key = map_table[key].normal;
+
+            if (kbd_stat.caps_lock)
+            {
+                if (key >= 'A' && key <= 'Z')
+                    key = key - 'A' + 'a';
+                else if (key >= 'a' && key <= 'z')
+                    key = key - 'a' + 'A';
+            }
 
             log_printf("key %c", key);
         }

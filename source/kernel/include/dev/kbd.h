@@ -5,6 +5,7 @@
 
 #define KEY_RSHIFT 0x36
 #define KEY_LSHFIT 0x2A
+#define KEY_CAPS 0x3A
 
 typedef struct _key_map_t
 {
@@ -14,6 +15,7 @@ typedef struct _key_map_t
 
 typedef struct _kbd_state_t
 {
+    int caps_lock : 1;
     int lshift_press : 1;
     int rshift_press : 1;
 } kbd_state_t;

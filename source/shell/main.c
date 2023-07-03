@@ -9,14 +9,14 @@ int main(int argc, char **argv)
 
     for (int i = 0; i < argc; i++)
     {
-        print_msg("arg: %s", argv[i]);
+        printf("arg: %s\n", argv[i]);
     }
     fork();
     yield();
 
     for (;;)
     {
-        print_msg("shell pid=%d", getpid());
+        printf("shell pid=%d\n", getpid());
         msleep(1000);
     }
 }

@@ -2,6 +2,7 @@
 #include "tools/log.h"
 #include "tools/klib.h"
 #include "cpu/mmu.h"
+#include "dev/console.h"
 
 static addr_alloc_t paddr_alloc;
 
@@ -132,6 +133,12 @@ void create_kernel_table(void)
             s_data,
             (void *)MEM_EBDA_START,
             s_data,
+            PTE_W,
+        },
+        {
+            (void *)CONSOLE_DISP_ADDR,
+            (void *)CONSOLE_DISP_END,
+            (void *)CONSOLE_DISP_ADDR,
             PTE_W,
         },
         {

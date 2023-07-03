@@ -8,16 +8,45 @@
 #define CONSOLE_ROW_MAX 25
 #define CONSOLE_COL_MAX 80
 
-typedef struct _disp_char_t
+typedef enum
 {
+    COLOR_Black = 0,
+    COLOR_Blue,
+    COLOR_Green,
+    COLOR_Cyan,
+    COLOR_Red,
+    Color_Magenta,
+    COLOR_Brown,
+    COLOR_Gray,
+    COLOR_DarkGray,
+    COLOR_Light_Blue,
+    COLOR_Light_Green,
+    COLOR_Light_Cyan,
+    COLOR_Light_Red,
+    COLOR_Light_Magenta,
+    COLOR_Yellow,
+    COLOR_White,
+} color_t;
+
+typedef union _disp_char_t
+{
+    struct
+    {
+        char c;
+        char foreground : 4;
+        char background : 3;
+    };
     uint16_t v;
 } disp_char_t;
 
 typedef struct _console_t
 {
     disp_char_t *disp_base;
+    int cursor_row, cursor_col;
     int display_rows;
     int display_cols;
+    color_t foreground;
+    color_t background;
 } console_t;
 
 int console_init(void);

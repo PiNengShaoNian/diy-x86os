@@ -5,6 +5,7 @@
 #include "comm/cpu_instr.h"
 #include <sys/stat.h>
 #include "dev/console.h"
+#include "fs/file.h"
 
 static uint8_t TEMP_ADDR[100 * 1024];
 static uint8_t *temp_pos;
@@ -100,4 +101,9 @@ int sys_isatty(int file)
 int sys_fstat(int file, struct stat *st)
 {
     return -1;
+}
+
+void fs_init(void)
+{
+    file_table_init();
 }

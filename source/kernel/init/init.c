@@ -11,6 +11,7 @@
 #include "tools/list.h"
 #include "core/memory.h"
 #include "dev/kbd.h"
+#include "fs/fs.h"
 
 void kernel_init(boot_info_t *boot_info)
 {
@@ -21,6 +22,7 @@ void kernel_init(boot_info_t *boot_info)
     log_init();
 
     memory_init(boot_info);
+    fs_init();
     time_init();
 
     task_manager_init();

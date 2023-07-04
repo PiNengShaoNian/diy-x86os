@@ -68,9 +68,16 @@ static const key_map_t map_table[256] = {
 
 void kbd_init(void)
 {
-    kernel_memset(&kbd_stat, 0, sizeof(kbd_stat));
-    irq_install(IRQ1_KEYBOARD, (irq_handler_t)exception_handler_kbd);
-    irq_enable(IRQ1_KEYBOARD);
+    static int initialized = 0;
+
+    if (!initialized)
+    {
+        kernel_memset(&kbd_stat, 0, sizeof(kbd_stat));
+        irq_install(IRQ1_KEYBOARD, (irq_handler_t)exception_handler_kbd);
+        irq_enable(IRQ1_KEYBOARD);
+    }
+
+    initialized = 1;
 }
 
 static inline int is_make_code(uint8_t key_code)

@@ -65,7 +65,7 @@ typedef struct _console_t
     int curr_param_index;
 } console_t;
 
-int console_init(void);
+int console_init(int idx);
 int console_write(int console, char *data, int size);
 void console_close(int console);
 

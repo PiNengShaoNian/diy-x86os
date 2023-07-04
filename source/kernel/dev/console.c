@@ -2,7 +2,8 @@
 #include "tools/klib.h"
 #include "comm/cpu_instr.h"
 
-#define CONSOLE_NR 1
+#define CONSOLE_NR 8
+
 static console_t console_buf[CONSOLE_NR];
 
 static int read_cursor_pos(void)
@@ -136,27 +137,34 @@ static void erase_backward(console_t *console)
     }
 }
 
-int console_init(void)
+int console_init(int idx)
 {
-    for (int i = 0; i < CONSOLE_NR; i++)
-    {
-        console_t *console = console_buf + i;
-        console->display_rows = CONSOLE_ROW_MAX;
-        console->display_cols = CONSOLE_COL_MAX;
-        console->foreground = COLOR_White;
-        console->background = COLOR_Black;
+    console_t *console = console_buf + idx;
+    console->display_rows = CONSOLE_ROW_MAX;
+    console->display_cols = CONSOLE_COL_MAX;
+    console->foreground = COLOR_White;
+    console->background = COLOR_Black;
 
+    if (idx == 0)
+    {
         int cursor_pos = read_cursor_pos();
         console->cursor_row = cursor_pos / console->display_cols;
         console->cursor_col = cursor_pos % console->display_cols;
-        console->old_cursor_col = console->cursor_col;
-        console->old_cursor_row = console->cursor_row;
-        console->write_state = CONSOLE_WRITE_NORMAL;
-        console->curr_param_index = 0;
-
-        console->disp_base = (disp_char_t *)CONSOLE_DISP_ADDR +
-                             i * CONSOLE_ROW_MAX * CONSOLE_COL_MAX;
     }
+    else
+    {
+        console->cursor_row = 0;
+        console->cursor_col = 0;
+        clear_display(console);
+        update_cursor_pos(console);
+    }
+    console->old_cursor_col = console->cursor_col;
+    console->old_cursor_row = console->cursor_row;
+    console->write_state = CONSOLE_WRITE_NORMAL;
+    console->curr_param_index = 0;
+
+    console->disp_base = (disp_char_t *)CONSOLE_DISP_ADDR +
+                         idx * CONSOLE_ROW_MAX * CONSOLE_COL_MAX;
 
     return 0;
 }

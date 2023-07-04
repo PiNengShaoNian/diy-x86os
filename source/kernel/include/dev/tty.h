@@ -20,6 +20,7 @@ typedef struct _tty_t
     tty_fifo_t o_fifo;
     char i_buf[TTY_IBUF_SIZE];
     tty_fifo_t i_fifo;
+    int console_idx;
 } tty_t;
 
 #endif

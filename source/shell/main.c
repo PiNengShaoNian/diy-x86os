@@ -3,6 +3,7 @@
 
 int main(int argc, char **argv)
 {
+#if 0
     printf("abef\b\b\b\bcd\n");
     printf("abcd\x7f;fg\n");
     printf("\0337hello, world!\03381234\n"); // 123o, world!
@@ -17,17 +18,11 @@ int main(int argc, char **argv)
     printf("\033[32;25;39m123!\n"); // ESC [pn m, Hello,world红色，其余绿色
 
     printf("\033[2J");
-
+#endif
+    open("tty:0,", 0);
     printf("Hello from shell\n");
     printf("os version: %s\n", "1.0.0");
     printf("%d %d %d\n", 1, 2, 3);
-
-    for (int i = 0; i < argc; i++)
-    {
-        printf("arg: %s\n", argv[i]);
-    }
-    fork();
-    yield();
 
     for (;;)
     {

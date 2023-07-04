@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 
     printf("\033[2J");
 #endif
-    open("tty:0", 0); // int fd = 0, stdin => tty0
+    open(argv[0], 0); // int fd = 0, stdin => tty0
     dup(0);           // int fd = 1, stdout => tty0
     dup(0);           // int fd = 2, stderr
 

@@ -18,6 +18,7 @@ file_t *file_alloc(void)
             kernel_memset(p_file, 0, sizeof(file_t));
             p_file->ref = 1;
             file = p_file;
+            break;
         }
     }
 

@@ -3,6 +3,7 @@
 #include "tools/log.h"
 #include "dev/kbd.h"
 #include "dev/console.h"
+#include "cpu/irq.h"
 
 static tty_t tty_devs[TTY_NR];
 static int curr_tty = 0;
@@ -39,8 +40,12 @@ void tty_fifo_init(tty_fifo_t *fifo, char *buf, int size)
 
 int tty_fifo_put(tty_fifo_t *fifo, char c)
 {
+    irq_state_t state = irq_enter_protection();
     if (fifo->count >= fifo->size)
+    {
+        irq_leave_protection(state);
         return -1;
+    }
 
     fifo->buf[fifo->write++] = c;
     if (fifo->write >= fifo->size)
@@ -48,13 +53,18 @@ int tty_fifo_put(tty_fifo_t *fifo, char c)
 
     fifo->count++;
 
+    irq_leave_protection(state);
     return 0;
 }
 
 int tty_fifo_get(tty_fifo_t *fifo, char *c)
 {
+    irq_state_t state = irq_enter_protection();
     if (fifo->count <= 0)
+    {
+        irq_leave_protection(state);
         return -1;
+    }
 
     *c = fifo->buf[fifo->read++];
     if (fifo->read >= fifo->size)
@@ -62,6 +72,7 @@ int tty_fifo_get(tty_fifo_t *fifo, char *c)
 
     fifo->count--;
 
+    irq_leave_protection(state);
     return 0;
 }
 

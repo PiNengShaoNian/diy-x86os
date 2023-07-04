@@ -1,6 +1,7 @@
 #include "dev/console.h"
 #include "tools/klib.h"
 #include "comm/cpu_instr.h"
+#include "dev/tty.h"
 
 #define CONSOLE_NR 8
 
@@ -186,7 +187,6 @@ static void write_normal(console_t *console, char ch)
         move_to_col0(console);
         break;
     case '\n':
-        move_to_col0(console);
         move_next_line(console);
         break;
     default:
@@ -343,14 +343,19 @@ static void write_esc_square(console_t *console, char c)
     }
 }
 
-int console_write(int console_idx, char *data, int size)
+int console_write(tty_t *tty)
 {
-    console_t *console = console_buf + console_idx;
-    int len;
+    console_t *console = console_buf + tty->console_idx;
+    int len = 0;
 
-    for (len = 0; len < size; len++)
+    do
     {
-        char ch = *data++;
+        char ch;
+        int err = tty_fifo_get(&tty->o_fifo, &ch);
+        if (err < 0)
+            break;
+
+        sem_notify(&tty->o_sem);
         switch (console->write_state)
         {
         case CONSOLE_WRITE_NORMAL:
@@ -365,7 +370,8 @@ int console_write(int console_idx, char *data, int size)
         default:
             break;
         }
-    }
+        len++;
+    } while (1);
 
     update_cursor_pos(console);
     return len;

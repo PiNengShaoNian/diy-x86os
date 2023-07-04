@@ -68,9 +68,9 @@ int sys_write(int file, char *ptr, int len)
 {
     if (file == 1)
     {
-        // ptr[len] = '\0';
-        console_write(0, ptr, len);
-        // log_printf("%s", ptr);
+        ptr[len] = '\0';
+        // console_write(0, ptr, len);
+        log_printf("%s", ptr);
     }
 
     return -1;

@@ -19,7 +19,7 @@ int strings_count(char **start)
 // /a/b/c/d
 char *get_file_name(const char *name)
 {
-    char *s = name;
+    char *s = (char *)name;
 
     while (*s != '\0')
         s++;

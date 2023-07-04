@@ -17,6 +17,7 @@
 #define SYS_isatty 55
 #define SYS_fstat 56
 #define SYS_sbrk 57
+#define SYS_dup 58
 
 #define SYS_printmsg 100
 

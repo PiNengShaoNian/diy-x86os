@@ -21,7 +21,10 @@ int main(int argc, char **argv)
 
     printf("\033[2J");
 #endif
-    open("tty:0,", 0);
+    open("tty:0", 0); // int fd = 0, stdin => tty0
+    dup(0);           // int fd = 1, stdout => tty0
+    dup(0);           // int fd = 2, stderr
+
     printf("Hello from shell\n");
     printf("os version: %s\n", "1.0.0");
     printf("%d %d %d\n", 1, 2, 3);

@@ -120,7 +120,6 @@ int sys_read(int file, char *ptr, int len)
     }
     else
     {
-        file = 0;
         file_t *p_file = task_file(file);
         if (!p_file)
         {
@@ -136,7 +135,6 @@ int sys_read(int file, char *ptr, int len)
 
 int sys_write(int file, char *ptr, int len)
 {
-    file = 0;
     file_t *p_file = task_file(file);
     if (!p_file)
     {
@@ -176,4 +174,30 @@ int sys_fstat(int file, struct stat *st)
 void fs_init(void)
 {
     file_table_init();
+}
+
+int sys_dup(int file)
+{
+    if (file < 0 || file >= TASK_OFILE_NR)
+    {
+        log_printf("file %d is not valid.", file);
+        return -1;
+    }
+
+    file_t *p_file = task_file(file);
+    if (!p_file)
+    {
+        log_printf("file not opened.");
+        return -1;
+    }
+
+    int fd = task_alloc_fd(p_file);
+    if (fd >= 0)
+    {
+        p_file->ref++;
+        return fd;
+    }
+
+    log_printf("no task file available");
+    return -1;
 }

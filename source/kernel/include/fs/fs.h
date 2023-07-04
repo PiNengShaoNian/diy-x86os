@@ -12,5 +12,6 @@ int sys_lseek(int file, int ptr, int dir);
 int sys_close(int file);
 int sys_isatty(int file);
 int sys_fstat(int file, struct stat *st);
+int sys_dup(int file);
 
 #endif

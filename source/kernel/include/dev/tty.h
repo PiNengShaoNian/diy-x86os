@@ -56,6 +56,7 @@ int tty_control(device_t *dev, int cmd, int arg0, int arg1);
 
 void tty_close(device_t *dev);
 
-void tty_in(int idx, char ch);
+void tty_select(int tty);
+void tty_in(char ch);
 
 #endif

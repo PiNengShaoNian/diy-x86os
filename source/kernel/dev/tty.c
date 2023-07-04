@@ -5,6 +5,7 @@
 #include "dev/console.h"
 
 static tty_t tty_devs[TTY_NR];
+static int curr_tty = 0;
 
 dev_desc_t dev_tty_desc = {
     .name = "tty",
@@ -182,9 +183,18 @@ void tty_close(device_t *dev)
 {
 }
 
-void tty_in(int idx, char ch)
+void tty_select(int tty)
 {
-    tty_t *tty = tty_devs + idx;
+    if (tty != curr_tty)
+    {
+        console_select(tty);
+        curr_tty = tty;
+    }
+}
+
+void tty_in(char ch)
+{
+    tty_t *tty = tty_devs + curr_tty;
 
     if (sem_count(&tty->i_sem) >= TTY_IBUF_SIZE)
         return;

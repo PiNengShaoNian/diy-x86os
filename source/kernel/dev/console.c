@@ -131,7 +131,7 @@ static int move_backward(console_t *console, int n)
 
 static void erase_backward(console_t *console)
 {
-    if (move_backward(console, 1))
+    if (move_backward(console, 1) == 0)
     {
         show_char(console, ' ');
         move_backward(console, 1);

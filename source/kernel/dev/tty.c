@@ -76,7 +76,11 @@ int tty_open(device_t *dev)
     tty_t *tty = tty_devs + idx;
     tty_fifo_init(&tty->o_fifo, tty->o_buf, TTY_OBUF_SIZE);
     sem_init(&tty->o_sem, TTY_OBUF_SIZE);
+
     tty_fifo_init(&tty->i_fifo, tty->i_buf, TTY_IBUF_SIZE);
+    sem_init(&tty->i_sem, 0);
+
+    tty->iflags = TTY_INCLR | TTY_IECHO;
     tty->oflags = TTY_OCRLF;
     tty->console_idx = idx;
 
@@ -88,7 +92,49 @@ int tty_open(device_t *dev)
 
 int tty_read(device_t *dev, int addr, char *buf, int size)
 {
-    return size;
+
+    if (size < 0)
+        return -1;
+
+    tty_t *tty = get_tty(dev);
+    char *pbuf = buf;
+    int len = 0;
+    while (len < size)
+    {
+        sem_wait(&tty->i_sem);
+        char ch;
+
+        tty_fifo_get(&tty->i_fifo, &ch);
+        switch (ch)
+        {
+        case '\n':
+        {
+            if ((tty->iflags & TTY_INCLR) && len < size - 1)
+            {
+                *pbuf++ = '\r';
+                len++;
+            }
+
+            *pbuf++ = '\n';
+            len++;
+            break;
+        }
+        default:
+        {
+            *pbuf++ = ch;
+            len++;
+            break;
+        }
+        }
+
+        if (tty->iflags & TTY_IECHO)
+            tty_write(dev, 0, &ch, 1);
+
+        if (ch == '\n' || ch == '\r')
+            break;
+    }
+
+    return len;
 }
 
 int tty_write(device_t *dev, int addr, char *buf, int size)
@@ -134,4 +180,15 @@ int tty_control(device_t *dev, int cmd, int arg0, int arg1)
 
 void tty_close(device_t *dev)
 {
+}
+
+void tty_in(int idx, char ch)
+{
+    tty_t *tty = tty_devs + idx;
+
+    if (sem_count(&tty->i_sem) >= TTY_IBUF_SIZE)
+        return;
+
+    tty_fifo_put(&tty->i_fifo, ch);
+    sem_notify(&tty->i_sem);
 }

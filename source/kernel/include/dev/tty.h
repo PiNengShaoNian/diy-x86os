@@ -19,6 +19,9 @@ typedef struct _tty_fifo_t
 
 #define TTY_OCRLF (1 << 0)
 
+#define TTY_INCLR (1 << 0)
+#define TTY_IECHO (1 << 1)
+
 typedef struct _tty_t
 {
     char o_buf[TTY_OBUF_SIZE];
@@ -26,6 +29,9 @@ typedef struct _tty_t
     sem_t o_sem;
     char i_buf[TTY_IBUF_SIZE];
     tty_fifo_t i_fifo;
+    sem_t i_sem;
+
+    int iflags;
     int oflags;
     int console_idx;
 } tty_t;
@@ -49,5 +55,7 @@ int tty_write(device_t *dev, int addr, char *buf, int size);
 int tty_control(device_t *dev, int cmd, int arg0, int arg1);
 
 void tty_close(device_t *dev);
+
+void tty_in(int idx, char ch);
 
 #endif

@@ -6,6 +6,7 @@
 enum
 {
     DEV_UNKNOWN = 0,
+    DEV_TTY,
 };
 
 typedef struct _device_t
@@ -29,5 +30,11 @@ typedef struct _dev_desc_t
     int (*control)(device_t *dev, int cmd, int arg0, int arg1);
     void (*close)(device_t *dev);
 } dev_desc_t;
+
+int dev_open(int major, int minor, void *data);
+int dev_read(int dev_id, int addr, char *buf, int size);
+int dev_write(int dev_id, int addr, char *buf, int size);
+int dev_control(int dev_int, int cmd, int arg0, int arg1);
+int dev_close(int dev_id);
 
 #endif

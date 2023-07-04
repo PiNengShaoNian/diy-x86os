@@ -25,6 +25,8 @@
         "mmu.h": "c",
         "syscall.h": "c",
         "console.h": "c",
-        "kbd.h": "c"
+        "kbd.h": "c",
+        "dev.h": "c",
+        "tty.h": "c"
     },
 }

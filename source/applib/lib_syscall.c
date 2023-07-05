@@ -167,3 +167,14 @@ int dup(int file)
 
     return sys_call(&args);
 }
+
+__attribute__((noreturn)) void _exit(int status)
+{
+    syscall_args_t args;
+    args.id = SYS_exit;
+    args.arg0 = status;
+
+    sys_call(&args);
+
+    __builtin_unreachable();
+}

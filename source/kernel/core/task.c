@@ -181,6 +181,7 @@ int task_init(task_t *task, const char *name, int flag,
     task->heap_end = 0;
     task->time_ticks = TASK_TIME_SLICE_DEFAULT;
     task->slice_ticks = task->time_ticks;
+    task->status = 0;
     list_node_init(&task->all_node);
     list_node_init(&task->run_node);
     list_node_init(&task->wait_node);
@@ -325,6 +326,28 @@ int sys_yield(void)
 
     irq_leave_protection(state);
     return 0;
+}
+
+void sys_exit(int status)
+{
+    task_t *curr_task = task_current();
+
+    for (int fd = 0; fd < TASK_OFILE_NR; fd++)
+    {
+        file_t *file = curr_task->file_table[fd];
+        if (file)
+        {
+            sys_close(fd);
+            curr_task->file_table[fd] = (file_t *)0;
+        }
+    }
+
+    irq_state_t state = irq_enter_protection();
+    curr_task->status = status;
+    curr_task->state = TASK_ZOMBIE;
+    task_set_block(curr_task);
+    task_dispatch();
+    irq_leave_protection(state);
 }
 
 void task_dispatch(void)

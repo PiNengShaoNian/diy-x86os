@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv);
 
@@ -10,5 +11,5 @@ void cstart(int argc, char **argv)
     while (start < __bss_end__)
         *start++ = 0;
 
-    main(argc, argv);
+    exit(main(argc, argv));
 }

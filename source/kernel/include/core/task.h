@@ -29,6 +29,7 @@ typedef struct _task_t
         TASK_SLEEPING,
         TASK_READY,
         TASK_WAITING,
+        TASK_ZOMBIE,
     } state;
 
     int pid;
@@ -39,6 +40,7 @@ typedef struct _task_t
     int sleep_ticks;
     int time_ticks;
     int slice_ticks;
+    int status;
 
     file_t *file_table[TASK_OFILE_NR];
     char name[TASK_NAME_SIZE];
@@ -75,6 +77,7 @@ task_t *task_first_task(void);
 
 void sys_msleep(uint32_t ms);
 int sys_yield(void);
+void sys_exit(int status);
 
 task_t *task_current(void);
 

@@ -80,6 +80,11 @@ static int do_echo(int argc, char **argv)
     return 0;
 }
 
+static void do_exit(int argc, char **argv)
+{
+    exit(0);
+}
+
 static const cli_cmd_t cmd_list[] = {
     {
         .name = "help",
@@ -95,6 +100,11 @@ static const cli_cmd_t cmd_list[] = {
         .name = "echo",
         .usage = "echo [-n count] msg",
         .do_func = do_echo,
+    },
+    {
+        .name = "quit",
+        .usage = "quit from shell",
+        .do_func = (int (*)(int, char **))do_exit,
     },
 };
 

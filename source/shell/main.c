@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
+
 #include "main.h"
 
 char cmd_buf[1024];
@@ -22,11 +24,77 @@ static int do_help(int argc, char **argv)
     return 0;
 }
 
+static int do_clear(int argc, char **argv)
+{
+    printf("%s", ESC_CLEAR_SCREEN);
+    printf("%s", ESC_MOVE_CURSOR(0, 0));
+
+    return 0;
+}
+
+static int do_echo(int argc, char **argv)
+{
+    if (argc == 1)
+    {
+        char msg_buf[128];
+        fgets(msg_buf, sizeof(msg_buf), stdin);
+        msg_buf[sizeof(msg_buf) - 1] = '\0';
+        puts(msg_buf);
+        return 0;
+    }
+
+    int count = 1;
+    int ch;
+    optind = 1;
+    while ((ch = getopt(argc, argv, "n:h")) != -1)
+    {
+        switch (ch)
+        {
+        case 'h':
+            puts("echo any message");
+            puts("Usage: echo [-n count] message");
+            return 0;
+        case 'n':
+            count = atoi(optarg);
+            break;
+        case '?':
+            if (optarg)
+                fprintf(stderr, "Unknown option: -%s\n", optarg);
+
+            return -1;
+        default:
+            break;
+        }
+    }
+
+    if (optind > argc - 1)
+    {
+        fprintf(stderr, "Message is empty\n");
+        return -1;
+    }
+
+    char *msg = argv[optind];
+    for (int i = 0; i < count; i++)
+        puts(msg);
+
+    return 0;
+}
+
 static const cli_cmd_t cmd_list[] = {
     {
         .name = "help",
-        .usage = "help -- he supported command",
+        .usage = "help -- supported command",
         .do_func = do_help,
+    },
+    {
+        .name = "clear",
+        .usage = "clear -- clear screen",
+        .do_func = do_clear,
+    },
+    {
+        .name = "echo",
+        .usage = "echo [-n count] msg",
+        .do_func = do_echo,
     },
 };
 
@@ -113,5 +181,7 @@ int main(int argc, char **argv)
             run_builtin(cmd, argc, argv);
             continue;
         }
+
+        fprintf(stderr, ESC_COLOR_ERROR "Unknown command: %s\n" ESC_COLOR_DEFAULT, cli.curr_input);
     }
 }

@@ -191,7 +191,7 @@ int tty_write(device_t *dev, int addr, char *buf, int size)
         console_write(tty);
     }
 
-    return size;
+    return len;
 }
 
 int tty_control(device_t *dev, int cmd, int arg0, int arg1)

@@ -476,6 +476,20 @@ int sys_getpid(void)
     return task->pid;
 }
 
+static void copy_opened_files(task_t *child_task)
+{
+    task_t *parent = task_current();
+    for (int i = 0; i < TASK_OFILE_NR; i++)
+    {
+        file_t *file = parent->file_table[i];
+        if (file)
+        {
+            file_inc_ref(file);
+            child_task->file_table[i] = file;
+        }
+    }
+}
+
 int sys_fork(void)
 {
     task_t *parent_task = task_current();
@@ -489,6 +503,9 @@ int sys_fork(void)
     int err = task_init(child_task, parent_task->name, 0, frame->eip, frame->esp + sizeof(uint32_t) * SYSCALL_PARAM_COUNT);
     if (err < 0)
         goto fork_failed;
+
+    // 拷贝打开的文件
+    copy_opened_files(child_task);
 
     tss_t *tss = &child_task->tss;
     tss->eax = 0;

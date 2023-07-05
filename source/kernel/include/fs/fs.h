@@ -3,6 +3,8 @@
 
 #include <sys/stat.h>
 #include "file.h"
+#include "tools/list.h"
+#include "ipc/mutex.h"
 
 struct _fs_t;
 
@@ -18,9 +20,22 @@ typedef struct _fs_op_t
     int (*stat)(file_t *file, struct stat *st);
 } fs_op_t;
 
+#define FS_MOUNTP_SIZE 512
+
+typedef enum _fs_type_t
+{
+    FS_DEVFS,
+} fs_type_t;
+
 typedef struct _fs_t
 {
+    char mount_point[FS_MOUNTP_SIZE];
+    fs_type_t type;
     fs_op_t *op;
+    void *data;
+    int dev_id;
+    list_node_t node;
+    mutex_t *mutex;
 } fs_t;
 
 void fs_init(void);

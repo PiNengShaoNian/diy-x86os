@@ -328,6 +328,42 @@ int sys_yield(void)
     return 0;
 }
 
+int sys_wait(int *status)
+{
+    task_t *curr_task = task_current();
+    for (;;)
+    {
+        mutex_lock(&task_table_mutex);
+        for (int i = 0; i < TASK_NR; i++)
+        {
+            task_t *task = task_table + i;
+            if (task->parent != curr_task)
+                continue;
+
+            if (task->state == TASK_ZOMBIE)
+            {
+                int pid = task->pid;
+                *status = task->status;
+
+                memory_destroy_uvm(task->tss.cr3);
+                memory_free_page(task->tss.esp0 - MEM_PAGE_SIZE);
+                kernel_memset(task, 0, sizeof(task_t));
+
+                mutex_unlock(&task_table_mutex);
+                return pid;
+            }
+        }
+
+        mutex_unlock(&task_table_mutex);
+        irq_state_t state = irq_enter_protection();
+        task_set_block(curr_task);
+        curr_task->state = TASK_WAITING;
+        task_dispatch();
+    }
+
+    return 0;
+}
+
 void sys_exit(int status)
 {
     task_t *curr_task = task_current();
@@ -342,7 +378,32 @@ void sys_exit(int status)
         }
     }
 
+    int move_child = 0;
+    mutex_lock(&task_table_mutex);
+    for (int i = 0; i < TASK_NR; i++)
+    {
+        task_t *task = task_table + i;
+        if (task->parent == curr_task)
+        {
+            task->parent = &task_manager.first_task;
+            if (task->state == TASK_ZOMBIE)
+                move_child = 1;
+        }
+    }
+    mutex_unlock(&task_table_mutex);
+
     irq_state_t state = irq_enter_protection();
+
+    task_t *parent = curr_task->parent;
+    if (move_child && (parent != &task_manager.first_task))
+    {
+        if (task_manager.first_task.state == TASK_WAITING)
+            task_set_ready(&task_manager.first_task);
+    }
+
+    if (parent->state == TASK_WAITING)
+        task_set_ready(curr_task->parent);
+
     curr_task->status = status;
     curr_task->state = TASK_ZOMBIE;
     task_set_block(curr_task);

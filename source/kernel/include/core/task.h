@@ -78,6 +78,7 @@ task_t *task_first_task(void);
 void sys_msleep(uint32_t ms);
 int sys_yield(void);
 void sys_exit(int status);
+int sys_wait(int *status);
 
 task_t *task_current(void);
 

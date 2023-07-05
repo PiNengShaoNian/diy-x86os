@@ -57,7 +57,8 @@ int first_task_main(void)
     for (;;)
     {
         // print_msg("task id=%d", pid);
-        msleep(1000);
+        int status;
+        wait(&status);
     }
 
     return 0;

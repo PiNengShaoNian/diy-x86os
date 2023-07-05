@@ -142,6 +142,27 @@ static void cli_init(const char *prompt, const cli_cmd_t *cmd_list, int size)
     cli.cmd_end = cmd_list + size;
 }
 
+static void run_exec_file(const char *path, int argc, char **argv)
+{
+    int pid = fork();
+    if (pid < 0)
+    {
+        fprintf(stderr, "fork failed %s", path);
+    }
+    else if (pid == 0)
+    {
+        for (int i = 0; i < argc; i++)
+            printf("arg %d = %s\n", i, argv[i]);
+        exit(-1);
+    }
+    else
+    {
+        int status;
+        int pid = wait(&status);
+        fprintf(stderr, "cmd %s result: %d, pid=%d\n", path, status, pid);
+    }
+}
+
 int main(int argc, char **argv)
 {
 
@@ -191,6 +212,8 @@ int main(int argc, char **argv)
             run_builtin(cmd, argc, argv);
             continue;
         }
+
+        run_exec_file("", argc, argv);
 
         fprintf(stderr, ESC_COLOR_ERROR "Unknown command: %s\n" ESC_COLOR_DEFAULT, cli.curr_input);
     }

@@ -18,6 +18,7 @@ static const syscall_handler_t sys_table[] = {
     [SYS_execve] = (syscall_handler_t)sys_execve,
     [SYS_yield] = (syscall_handler_t)sys_yield,
     [SYS_exit] = (syscall_handler_t)sys_exit,
+    [SYS_wait] = (syscall_handler_t)sys_wait,
     [SYS_printmsg] = (syscall_handler_t)sys_print_msg,
 
     [SYS_open] = (syscall_handler_t)sys_open,

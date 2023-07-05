@@ -178,3 +178,12 @@ __attribute__((noreturn)) void _exit(int status)
 
     __builtin_unreachable();
 }
+
+int wait(int *status)
+{
+    syscall_args_t args;
+    args.id = SYS_wait;
+    args.arg0 = (int)status;
+
+    return sys_call(&args);
+}

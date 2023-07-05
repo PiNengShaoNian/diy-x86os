@@ -1,26 +1,44 @@
 #include "lib_syscall.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "main.h"
 
 char cmd_buf[1024];
 
+static cli_t cli;
+static const char *prompt = "sh >>";
+
+static int do_help(int argc, char **argv)
+{
+    return 0;
+}
+
+static const cli_cmd_t cmd_list[] = {
+    {
+        .name = "help",
+        .usage = "help -- list supported command",
+        .do_func = do_help,
+    },
+};
+
+static void show_prompt(void)
+{
+    printf("%s", cli.prompt);
+    fflush(stdout);
+}
+
+static void cli_init(const char *prompt, const cli_cmd_t *cmd_list, int size)
+{
+    cli.prompt = prompt;
+    memset(cli.curr_input, 0, CLI_INPUT_SIZE);
+    cli.cmd_start = cmd_list;
+    cli.cmd_end = cmd_list + size;
+}
+
 int main(int argc, char **argv)
 {
-#if 0
-    printf("abef\b\b\b\bcd\n");
-    printf("abcd\x7f;fg\n");
-    printf("\0337hello, world!\03381234\n"); // 123o, world!
-    printf("\033[31;42mHello,world!\033[39;49m123\n");
 
-    printf("123\033[2DHello,world!\n"); // 光标左移2, 1Hello,world!
-    printf("123\033[2CHello,world!\n"); // 光标右移2, 123  Hello,world!
-
-    printf("\033[31m");             // ESC [pn m, Hello,world红色其余绿色
-    printf("\033[10;10H test!\n");  // 定位到10, 10, test!
-    printf("\033[20;20H test!\n");  // 定位到20, 20, test!
-    printf("\033[32;25;39m123!\n"); // ESC [pn m, Hello,world红色，其余绿色
-
-    printf("\033[2J");
-#endif
     open(argv[0], 0); // int fd = 0, stdin => tty0
     dup(0);           // int fd = 1, stdout => tty0
     dup(0);           // int fd = 2, stderr
@@ -29,9 +47,11 @@ int main(int argc, char **argv)
     printf("os version: %s\n", "1.0.0");
     printf("%d %d %d\n", 1, 2, 3);
 
+    cli_init(prompt, cmd_list, sizeof(cmd_list) / sizeof(cmd_list[0]));
+
     for (;;)
     {
-        gets(cmd_buf);
-        puts(cmd_buf);
+        show_prompt();
+        gets(cli.curr_input);
     }
 }

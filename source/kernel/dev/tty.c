@@ -119,6 +119,15 @@ int tty_read(device_t *dev, int addr, char *buf, int size)
         tty_fifo_get(&tty->i_fifo, &ch);
         switch (ch)
         {
+        case 0x7F:
+        {
+            if (len == 0)
+                continue;
+
+            len--;
+            pbuf--;
+            break;
+        }
         case '\n':
         {
             if ((tty->iflags & TTY_INCLR) && len < size - 1)

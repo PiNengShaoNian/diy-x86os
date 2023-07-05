@@ -27,6 +27,7 @@
         "console.h": "c",
         "kbd.h": "c",
         "dev.h": "c",
-        "tty.h": "c"
+        "tty.h": "c",
+        "main.h": "c"
     },
 }

@@ -2,6 +2,8 @@
 #define DISK_H
 
 #include "comm/types.h"
+#include "ipc/mutex.h"
+#include "ipc/sem.h"
 
 #define DISK_NAME_SIZE 32
 #define PART_NAME_SIZE 32
@@ -87,6 +89,9 @@ typedef struct _disk_t
     int sector_size;
     int sector_count;
     partinfo_t partinfo[DISK_PRIMARY_PART_CNT];
+
+    mutex_t *mutex;
+    sem_t *op_sem;
 } disk_t;
 
 void disk_init(void);

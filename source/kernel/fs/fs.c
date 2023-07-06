@@ -121,16 +121,15 @@ int sys_open(const char *name, int flags, ...)
 {
     if (kernel_strncmp(name, "/shell.elf", 9) == 0)
     {
-        read_disk(5000, 80, (uint8_t *)TEMP_ADDR);
-        temp_pos = (uint8_t *)TEMP_ADDR;
+        int dev_id = dev_open(DEV_DISK, 0xa0, (void *)0);
+        dev_read(dev_id, 5000, (uint8_t *)TEMP_ADDR, 80);
+        temp_pos = TEMP_ADDR;
         return TEMP_FILE_ID;
     }
 
     file_t *file = file_alloc();
     if (!file)
-    {
         return -1;
-    }
 
     int fd = task_alloc_fd(file);
     if (fd < 0)

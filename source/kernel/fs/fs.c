@@ -49,6 +49,11 @@ static void read_disk(uint32_t sector, int sector_count, uint8_t *buf)
     }
 }
 
+static int is_fd_bad(int file)
+{
+    return file < 0 || file >= TASK_OFILE_NR;
+}
+
 static int is_path_valid(const char *path)
 {
     if (path == (const char *)0 || path[0] == '\0')
@@ -57,61 +62,119 @@ static int is_path_valid(const char *path)
     return 1;
 }
 
+int path_to_num(const char *path, int *num)
+{
+    int n = 0;
+    const char *c = path;
+
+    while (*c)
+    {
+        n = n * 10 + *c - '0';
+        c++;
+    }
+
+    *num = n;
+    return 0;
+}
+
+const char *path_next_child(const char *path)
+{
+    // /dev/tty0
+    const char *c = path;
+    while (*c && (*c++ == '/'))
+        ;
+
+    while (*c && (*c++ != '/'))
+        ;
+
+    return *c ? c : (const char *)0;
+}
+
+int path_begin_with(const char *path, const char *str)
+{
+    const char *s1 = path, *s2 = str;
+    while (*s1 && *s2 && (*s1 == *s2))
+    {
+        s1++;
+        s2++;
+    }
+
+    return *s2 == '\0';
+}
+
+static void fs_protect(fs_t *fs)
+{
+    if (fs->mutex)
+        mutex_lock(fs->mutex);
+}
+
+static void fs_leave_protect(fs_t *fs)
+{
+    if (fs->mutex)
+        mutex_unlock(fs->mutex);
+}
+
+// /dev/ /home
 int sys_open(const char *name, int flags, ...)
 {
-    if (kernel_strncmp(name, "tty", 3) == 0)
+    if (kernel_strncmp(name, "/shell.elf", 9) == 0)
     {
-        if (!is_path_valid(name))
-        {
-            log_printf("path is not valid");
-            return -1;
-        }
-
-        int fd = -1;
-        file_t *file = file_alloc();
-        if (file)
-        {
-            fd = task_alloc_fd(file);
-            if (fd < 0)
-                goto sys_open_failed;
-        }
-        else
-        {
-            goto sys_open_failed;
-        }
-
-        if (kernel_strlen(name) < 5)
-            goto sys_open_failed;
-
-        int num = name[4] - '0';
-        int dev_id = dev_open(DEV_TTY, num, (void *)0);
-        if (dev_id < 0)
-            goto sys_open_failed;
-
-        file->dev_id = dev_id;
-        file->mode = 0;
-        file->pos = 0;
-        file->ref = 1;
-        file->type = FILE_TTY;
-        kernel_strncpy(file->file_name, name, FILE_NAME_SIZE);
-        return fd;
-
-    sys_open_failed:
-        if (file)
-            file_free(file);
-
-        if (fd >= 0)
-            task_remove_fd(fd);
+        read_disk(5000, 80, (uint8_t *)TEMP_ADDR);
+        temp_pos = (uint8_t *)TEMP_ADDR;
+        return TEMP_FILE_ID;
     }
-    else
+
+    file_t *file = file_alloc();
+    if (!file)
     {
-        if (name[0] == '/')
-        {
-            read_disk(5000, 80, (uint8_t *)TEMP_ADDR);
-            temp_pos = (uint8_t *)TEMP_ADDR;
-            return TEMP_FILE_ID;
-        }
+        return -1;
     }
+
+    int fd = task_alloc_fd(file);
+    if (fd < 0)
+        goto sys_open_failed;
+
+    if (kernel_strlen(name) < 5)
+        goto sys_open_failed;
+
+    fs_t *fs = (fs_t *)0;
+    list_node_t *node = list_first(&mounted_list);
+    while (node)
+    {
+        fs_t *curr = list_node_parent(node, fs_t, node);
+        if (path_begin_with(name, curr->mount_point))
+        {
+            fs = curr;
+            break;
+        }
+
+        node = list_node_next(node);
+    }
+
+    if (fs)
+        name = path_next_child(name);
+
+    file->mode = flags;
+    file->fs = fs;
+    kernel_strncpy(file->file_name, name, FILE_NAME_SIZE);
+
+    fs_protect(fs);
+    int err = fs->op->open(fs, name, file);
+    if (err < 0)
+    {
+        fs_leave_protect(fs);
+        goto sys_open_failed;
+    }
+
+    fs_leave_protect(fs);
+
+    return fd;
+
+sys_open_failed:
+    file_free(file);
+
+    if (fd >= 0)
+        task_remove_fd(fd);
 
     return -1;
 }
@@ -179,7 +242,7 @@ int sys_fstat(int file, struct stat *st)
 
 int sys_dup(int file)
 {
-    if (file < 0 || file >= TASK_OFILE_NR)
+    if (is_fd_bad(file))
     {
         log_printf("file %d is not valid.", file);
         return -1;

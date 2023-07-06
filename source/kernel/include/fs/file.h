@@ -11,6 +11,7 @@ typedef enum _file_type_t
     FILE_UNKOWN = 0,
     FILE_TTY,
 } file_type_t;
+struct _fs_t;
 
 typedef struct _file_t
 {
@@ -21,6 +22,8 @@ typedef struct _file_t
     int dev_id;
     int pos;
     int mode;
+
+    struct _fs_t *fs;
 } file_t;
 
 file_t *file_alloc(void);

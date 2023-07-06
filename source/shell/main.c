@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
+#include <sys/file.h>
 
 #include "main.h"
 
@@ -166,9 +167,9 @@ static void run_exec_file(const char *path, int argc, char **argv)
 int main(int argc, char **argv)
 {
 
-    open(argv[0], 0); // int fd = 0, stdin => tty0
-    dup(0);           // int fd = 1, stdout => tty0
-    dup(0);           // int fd = 2, stderr
+    open(argv[0], O_RDWR); // int fd = 0, stdin => tty0
+    dup(0);                // int fd = 1, stdout => tty0
+    dup(0);                // int fd = 2, stderr
 
     printf("Hello from shell\n");
     printf("os version: %s\n", "1.0.0");

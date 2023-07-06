@@ -9,6 +9,7 @@
 #include "dev/dev.h"
 #include "core/task.h"
 #include "tools/log.h"
+#include <sys/file.h>
 
 #define FS_TABLE_SIZE 10
 static list_t mounted_list;
@@ -187,19 +188,29 @@ int sys_read(int file, char *ptr, int len)
         temp_pos += len;
         return len;
     }
-    else
-    {
-        file_t *p_file = task_file(file);
-        if (!p_file)
-        {
-            log_printf("file not opened");
-            return -1;
-        }
 
-        return dev_read(p_file->dev_id, 0, ptr, len);
+    if (is_fd_bad(file) || !ptr || !len)
+        return 0;
+
+    file_t *p_file = task_file(file);
+    if (!p_file)
+    {
+        log_printf("file not opened");
+        return -1;
     }
 
-    return -1;
+    if (p_file->mode == O_WRONLY)
+    {
+        log_printf("file is write only");
+        return -1;
+    }
+
+    fs_t *fs = p_file->fs;
+    fs_protect(fs);
+    int err = fs->op->read(ptr, len, p_file);
+    fs_leave_protect(fs);
+
+    return err;
 }
 
 int sys_write(int file, char *ptr, int len)
@@ -211,7 +222,18 @@ int sys_write(int file, char *ptr, int len)
         return -1;
     }
 
-    return dev_write(p_file->dev_id, 0, ptr, len);
+    if (p_file->mode == O_RDONLY)
+    {
+        log_printf("file is read only");
+        return -1;
+    }
+
+    fs_t *fs = p_file->fs;
+    fs_protect(fs);
+    int err = fs->op->write(ptr, len, p_file);
+    fs_leave_protect(fs);
+
+    return err;
 }
 
 int sys_lseek(int file, int ptr, int dir)
@@ -222,22 +244,93 @@ int sys_lseek(int file, int ptr, int dir)
         return 0;
     }
 
-    return -1;
+    if (is_fd_bad(file))
+        return 0;
+
+    file_t *p_file = task_file(file);
+    if (!p_file)
+    {
+        log_printf("file not opened");
+        return -1;
+    }
+
+    fs_t *fs = p_file->fs;
+    fs_protect(fs);
+    int err = fs->op->seek(p_file, ptr, dir);
+    fs_leave_protect(fs);
+
+    return err;
 }
 
 int sys_close(int file)
 {
+    if (file == TEMP_FILE_ID)
+        return 0;
+
+    if (is_fd_bad(file))
+    {
+        log_printf("file error");
+        return 0;
+    }
+
+    file_t *p_file = task_file(file);
+    if (!p_file)
+    {
+        log_printf("file not opened");
+        return -1;
+    }
+
+    ASSERT(p_file->ref > 0);
+
+    if (p_file->ref-- == 1)
+    {
+        fs_t *fs = p_file->fs;
+        fs_protect(fs);
+        fs->op->close(p_file);
+        fs_leave_protect(fs);
+
+        file_free(p_file);
+    }
+
+    task_remove_fd(file);
+
     return 0;
 }
 
 int sys_isatty(int file)
 {
-    return -1;
+    if (is_fd_bad(file))
+        return 0;
+
+    file_t *p_file = task_file(file);
+    if (!p_file)
+    {
+        log_printf("file not opened");
+        return -1;
+    }
+
+    return p_file->type == FILE_TTY;
 }
 
 int sys_fstat(int file, struct stat *st)
 {
-    return -1;
+    if (is_fd_bad(file))
+        return 0;
+
+    file_t *p_file = task_file(file);
+    if (!p_file)
+    {
+        log_printf("file not opened");
+        return -1;
+    }
+
+    fs_t *fs = p_file->fs;
+    kernel_memset(st, 0, sizeof(struct stat));
+    fs_protect(fs);
+    int err = fs->op->stat(p_file, st);
+    fs_leave_protect(fs);
+
+    return err;
 }
 
 int sys_dup(int file)

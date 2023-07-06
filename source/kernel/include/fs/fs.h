@@ -25,6 +25,7 @@ typedef struct _fs_op_t
 typedef enum _fs_type_t
 {
     FS_DEVFS,
+    FS_FAT16,
 } fs_type_t;
 
 typedef struct _fs_t

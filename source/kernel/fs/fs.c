@@ -11,6 +11,7 @@
 #include "tools/log.h"
 #include <sys/file.h>
 #include "dev/disk.h"
+#include "os_cfg.h"
 
 #define FS_TABLE_SIZE 10
 static list_t mounted_list;
@@ -20,6 +21,8 @@ static list_t free_list;
 static uint8_t TEMP_ADDR[100 * 1024];
 static uint8_t *temp_pos;
 extern fs_op_t devfs_op;
+extern fs_op_t fatfs_op;
+static fs_t *root_fs;
 
 #define TEMP_FILE_ID 100
 
@@ -154,6 +157,8 @@ int sys_open(const char *name, int flags, ...)
 
     if (fs)
         name = path_next_child(name);
+    else
+        fs = root_fs;
 
     file->mode = flags;
     file->fs = fs;
@@ -372,6 +377,8 @@ static fs_op_t *get_fs_op(fs_type_t type, int major)
 {
     switch (type)
     {
+    case FS_FAT16:
+        return &(fatfs_op);
     case FS_DEVFS:
         return &(devfs_op);
     default:
@@ -443,4 +450,7 @@ void fs_init(void)
 
     fs_t *fs = mount(FS_DEVFS, "/dev", 0, 0);
     ASSERT(fs != (fs_t *)0);
+
+    root_fs = mount(FS_FAT16, "/home", ROOT_DEV);
+    ASSERT(root_fs != (fs_t *)0);
 }

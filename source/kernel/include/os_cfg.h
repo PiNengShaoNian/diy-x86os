@@ -16,4 +16,6 @@
 
 #define TASK_NR 128
 
+#define ROOT_DEV DEV_DISK, 0xb1
+
 #endif

@@ -27,6 +27,8 @@
 #define IRQ0_TIMER 0x20
 #define IRQ1_KEYBOARD 0x21
 
+#define IRQ14_HARDDISK_PRIMARY (0x20 + 14)
+
 #define ERR_PAGE_P (1 << 0)
 #define ERR_PAGE_WR (1 << 1)
 #define ERR_PAGE_US (1 << 1)

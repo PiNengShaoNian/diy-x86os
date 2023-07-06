@@ -91,4 +91,6 @@ typedef struct _disk_t
 
 void disk_init(void);
 
+void exception_handler_ide_primary(void);
+
 #endif

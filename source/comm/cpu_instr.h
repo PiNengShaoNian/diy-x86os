@@ -29,6 +29,12 @@ static inline void outb(uint16_t port, uint8_t data)
     __asm__ __volatile__("outb %[v], %[p]" ::[p] "d"(port), [v] "a"(data));
 }
 
+static inline void outw(uint16_t port, uint16_t data)
+{
+    // out al, dx
+    __asm__ __volatile__("out %[v], %[p]" ::[p] "d"(port), [v] "a"(data));
+}
+
 static inline void cli(void)
 {
     __asm__ __volatile__("cli");

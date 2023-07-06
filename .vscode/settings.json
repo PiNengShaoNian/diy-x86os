@@ -29,6 +29,7 @@
         "dev.h": "c",
         "tty.h": "c",
         "main.h": "c",
-        "devfs.h": "c"
+        "devfs.h": "c",
+        "disk.h": "c"
     },
 }

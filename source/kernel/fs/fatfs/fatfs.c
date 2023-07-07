@@ -6,6 +6,70 @@
 #include "tools/klib.h"
 #include "core/memory.h"
 
+static int bread_sector(fat_t *fat, int sector)
+{
+    if (sector == fat->curr_sector)
+        return 0;
+
+    int cnt = dev_read(fat->fs->dev_id, sector, fat->fat_buffer, 1);
+
+    if (cnt == 1)
+    {
+        fat->curr_sector = sector;
+        return 0;
+    }
+
+    return -1;
+}
+
+void diritem_get_name(diritem_t *item, char *dest)
+{
+    char *c = dest;
+    char *ext = (char *)0;
+    kernel_memset(dest, 0, 12);
+
+    for (int i = 0; i < 11; i++)
+    {
+        if (item->DIR_Name[i] != ' ')
+            *c++ = item->DIR_Name[i];
+
+        if (i == 7)
+        {
+            ext = c;
+            *c++ = '.';
+        }
+    }
+
+    if (ext && ext[1] == '\0')
+        ext[0] = '\0';
+}
+
+static diritem_t *read_dir_entry(fat_t *fat, int index)
+{
+    if (index < 0 || (index >= fat->root_ent_cnt))
+        return (diritem_t *)0;
+
+    int offset = index * sizeof(diritem_t);
+    int sector = fat->root_start + offset / fat->bytes_per_sector;
+    int err = bread_sector(fat, sector);
+    if (err < 0)
+        return (diritem_t *)0;
+
+    return (diritem_t *)(fat->fat_buffer + offset % fat->bytes_per_sector);
+}
+
+file_type_t diritem_get_type(diritem_t *diritem)
+{
+    if (diritem->DIR_Attr & (DIRITEM_ATTR_VOLUME_ID |
+                             DIRITEM_ATTR_HIDDEN | DIRITEM_ATTR_SYSTEM))
+        return FILE_UNKOWN;
+
+    if ((diritem->DIR_Attr & DIRITEM_ATTR_LONG_NAME) == DIRITEM_ATTR_LONG_NAME)
+        return FILE_UNKOWN;
+
+    return (diritem->DIR_Attr & DIRITEM_ATTR_DIRECTORY) ? FILE_DIR : FILE_NORMAL;
+}
+
 int fatfs_mount(struct _fs_t *fs, int major, int minor)
 {
     int dev_id = dev_open(major, minor, (void *)0);
@@ -41,6 +105,7 @@ int fatfs_mount(struct _fs_t *fs, int major, int minor)
     fat->cluster_byte_size = fat->sec_per_cluster * dbr->BPB_BytesPerSec;
     fat->root_start = fat->tbl_start + fat->tbl_sectors * fat->tbl_cnt;
     fat->data_start = fat->root_start + fat->root_ent_cnt * 32 / SECTOR_SIZE;
+    fat->curr_sector = -1;
     fat->fs = fs;
 
     if (fat->tbl_cnt != 2)
@@ -112,12 +177,31 @@ int fatfs_opendir(struct _fs_t *fs, const char *name, DIR *dir)
 
 int fatfs_readdir(struct _fs_t *fs, DIR *dir, struct dirent *dirent)
 {
-    if (dir->index++ < 10)
+    fat_t *fat = (fat_t *)fs->data;
+
+    while (dir->index < fat->root_ent_cnt)
     {
-        dirent->type = FILE_NORMAL;
-        dirent->size = 1000;
-        kernel_memcpy(dirent->name, "hello", 6);
-        return 0;
+        diritem_t *item = read_dir_entry(fat, dir->index);
+        if (item == (diritem_t *)0)
+            return -1;
+
+        if (item->DIR_Name[0] == DIRITEM_NAME_END)
+            break;
+
+        if (item->DIR_Name[0] != DIRITEM_NAME_FREE)
+        {
+            file_type_t type = diritem_get_type(item);
+            if (type == FILE_NORMAL || (type == FILE_DIR))
+            {
+                dirent->size = item->DIR_FileSize;
+                dirent->type = type;
+                diritem_get_name(item, dirent->name);
+                dirent->index = dir->index++;
+                return 0;
+            }
+        }
+
+        dir->index++;
     }
 
     return -1;

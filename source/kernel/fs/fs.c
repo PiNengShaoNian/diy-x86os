@@ -454,3 +454,16 @@ void fs_init(void)
     root_fs = mount(FS_FAT16, "/home", ROOT_DEV);
     ASSERT(root_fs != (fs_t *)0);
 }
+
+int sys_opendir(const char *name, DIR *dir)
+{
+    return -1;
+}
+int sys_readdir(DIR *dir, struct dirent *dirent)
+{
+    return -1;
+}
+int sys_closedir(DIR *dir)
+{
+    return -1;
+}

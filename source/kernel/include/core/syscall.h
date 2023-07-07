@@ -20,6 +20,9 @@
 #define SYS_dup 58
 #define SYS_exit 59
 #define SYS_wait 60
+#define SYS_opendir 61
+#define SYS_readdir 62
+#define SYS_closedir 63
 
 #define SYS_printmsg 100
 

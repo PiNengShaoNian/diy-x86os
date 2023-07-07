@@ -457,13 +457,24 @@ void fs_init(void)
 
 int sys_opendir(const char *name, DIR *dir)
 {
-    return -1;
+    fs_protect(root_fs);
+    int err = root_fs->op->opendir(root_fs, name, dir);
+    fs_leave_protect(root_fs);
+    return err;
 }
+
 int sys_readdir(DIR *dir, struct dirent *dirent)
 {
-    return -1;
+    fs_protect(root_fs);
+    int err = root_fs->op->readdir(root_fs, dir, dirent);
+    fs_leave_protect(root_fs);
+    return err;
 }
+
 int sys_closedir(DIR *dir)
 {
-    return -1;
+    fs_protect(root_fs);
+    int err = root_fs->op->closedir(root_fs, dir);
+    fs_leave_protect(root_fs);
+    return err;
 }

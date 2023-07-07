@@ -4,6 +4,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <sys/file.h>
+#include "fs/file.h"
 
 #include "main.h"
 
@@ -86,6 +87,26 @@ static void do_exit(int argc, char **argv)
     exit(0);
 }
 
+static int do_ls(int argc, char **argv)
+{
+    DIR *p_dir = opendir("temp");
+    if (p_dir == NULL)
+    {
+        printf("open dir failed.");
+        return -1;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(p_dir)) != NULL)
+    {
+        printf("%c %s %d\n",
+               entry->type == FILE_DIR ? 'd' : 'f',
+               entry->name, entry->size);
+    }
+
+    closedir(p_dir);
+}
+
 static const cli_cmd_t cmd_list[] = {
     {
         .name = "help",
@@ -101,6 +122,11 @@ static const cli_cmd_t cmd_list[] = {
         .name = "echo",
         .usage = "echo [-n count] msg",
         .do_func = do_echo,
+    },
+    {
+        .name = "ls",
+        .usage = "ls -- list directory",
+        .do_func = do_ls,
     },
     {
         .name = "quit",

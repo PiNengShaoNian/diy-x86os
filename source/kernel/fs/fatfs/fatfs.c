@@ -104,6 +104,30 @@ int fatfs_stat(file_t *file, struct stat *st)
     return -1;
 }
 
+int fatfs_opendir(struct _fs_t *fs, const char *name, DIR *dir)
+{
+    dir->index = 0;
+    return 0;
+}
+
+int fatfs_readdir(struct _fs_t *fs, DIR *dir, struct dirent *dirent)
+{
+    if (dir->index++ < 10)
+    {
+        dirent->type = FILE_NORMAL;
+        dirent->size = 1000;
+        kernel_memcpy(dirent->name, "hello", 6);
+        return 0;
+    }
+
+    return -1;
+}
+
+int fatfs_closedir(struct _fs_t *fs, DIR *dir)
+{
+    return 0;
+}
+
 fs_op_t fatfs_op = {
     .mount = fatfs_mount,
     .unmount = fatfs_unmount,
@@ -113,4 +137,8 @@ fs_op_t fatfs_op = {
     .close = fatfs_close,
     .seek = fatfs_seek,
     .stat = fatfs_stat,
+
+    .opendir = fatfs_opendir,
+    .readdir = fatfs_readdir,
+    .closedir = fatfs_closedir,
 };

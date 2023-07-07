@@ -5,6 +5,7 @@
 #include "file.h"
 #include "tools/list.h"
 #include "ipc/mutex.h"
+#include "fatfs/fatfs.h"
 
 struct _fs_t;
 
@@ -37,6 +38,11 @@ typedef struct _fs_t
     int dev_id;
     list_node_t node;
     mutex_t *mutex;
+
+    union
+    {
+        fat_t fat_data;
+    };
 } fs_t;
 
 void fs_init(void);

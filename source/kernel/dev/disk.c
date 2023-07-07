@@ -103,8 +103,9 @@ static int detect_part_info(disk_t *disk)
         }
         else
         {
+            // 在主分区中找到，复制信息
             kernel_sprintf(part_info->name, "%s%d", disk->name, i + 1);
-            part_info->start_sector = item->start_sector;
+            part_info->start_sector = item->relative_sectors;
             part_info->total_sectors = item->total_sectors;
             part_info->disk = disk;
         }
@@ -222,7 +223,9 @@ int disk_read(device_t *dev, int addr, char *buf, int size)
     int cnt;
     for (cnt = 0; cnt < size; cnt++, buf += disk->sector_size)
     {
-        sem_wait(disk->op_sem);
+        if (task_current())
+            sem_wait(disk->op_sem);
+
         int err = disk_wait_data(disk);
         if (err < 0)
         {
@@ -257,7 +260,10 @@ int disk_write(device_t *dev, int addr, char *buf, int size)
     for (cnt = 0; cnt < size; cnt++, buf += disk->sector_size)
     {
         disk_write_data(disk, buf, disk->sector_size);
-        sem_wait(disk->op_sem);
+
+        if (task_current())
+            sem_wait(disk->op_sem);
+
         int err = disk_wait_data(disk);
         if (err < 0)
         {
@@ -286,7 +292,7 @@ void do_handler_ide_primary(exception_frame_t *frame)
 {
     pic_send_eoi(IRQ14_HARDDISK_PRIMARY);
 
-    if (task_on_op)
+    if (task_on_op && task_current())
         sem_notify(&op_sem);
 }
 

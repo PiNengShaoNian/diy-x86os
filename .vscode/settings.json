@@ -30,6 +30,7 @@
         "tty.h": "c",
         "main.h": "c",
         "devfs.h": "c",
-        "disk.h": "c"
+        "disk.h": "c",
+        "fatfs.h": "c"
     },
 }

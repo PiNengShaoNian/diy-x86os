@@ -104,11 +104,11 @@ file_type_t diritem_get_type(diritem_t *diritem)
 static void read_from_diritem(fat_t *fat, file_t *file, diritem_t *item, int index)
 {
     file->type = diritem_get_type(item);
-    file->size = item->DIR_FileSize;
+    file->size = (int)item->DIR_FileSize;
     file->pos = 0;
-    file->p_index = 0;
-    file->sblk = (item->DIR_FstClusHI << 16) | (item->DIR_FstClusL0);
+    file->sblk = (item->DIR_FstClusHI << 16) | item->DIR_FstClusL0;
     file->cblk = file->sblk;
+    file->p_index = index;
 }
 
 int cluster_is_valid(cluster_t cluster)
@@ -320,7 +320,37 @@ void fatfs_close(file_t *file)
 
 int fatfs_seek(file_t *file, uint32_t offset, int dir)
 {
-    return -1;
+    if (dir != 0)
+        return -1;
+
+    fat_t *fat = (fat_t *)file->fs->data;
+    cluster_t current_cluster = file->sblk;
+    uint32_t curr_pos = 0;
+    uint32_t offset_to_move = offset;
+
+    while (offset_to_move)
+    {
+        uint32_t c_offset = curr_pos % fat->cluster_byte_size;
+        uint32_t curr_move = offset_to_move;
+
+        if (c_offset + curr_move < fat->cluster_byte_size)
+        {
+            curr_pos += curr_move;
+            break;
+        }
+
+        curr_move = fat->cluster_byte_size - c_offset;
+        curr_pos += curr_move;
+        offset_to_move -= curr_move;
+
+        current_cluster = cluster_get_next(fat, current_cluster);
+        if (!cluster_is_valid(current_cluster))
+            return -1;
+    }
+
+    file->pos = curr_pos;
+    file->cblk = current_cluster;
+    return 0;
 }
 
 int fatfs_stat(file_t *file, struct stat *st)

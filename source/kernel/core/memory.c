@@ -201,10 +201,11 @@ void memory_init(boot_info_t *boot_info)
     mmu_set_page_dir((uint32_t)kernel_page_dir);
 }
 
-int memory_alloc_for_page_dir(uint32_t page_dir, uint32_t vaddr, uint32_t size, int perm)
+uint32_t memory_alloc_for_page_dir(uint32_t page_dir, uint32_t vaddr, uint32_t size, int perm)
 {
     uint32_t curr_vaddr = vaddr;
     int page_count = up2(size, MEM_PAGE_SIZE) / MEM_PAGE_SIZE;
+    vaddr = down2(vaddr, MEM_PAGE_SIZE);
 
     for (int i = 0; i < page_count; i++)
     {
@@ -212,7 +213,7 @@ int memory_alloc_for_page_dir(uint32_t page_dir, uint32_t vaddr, uint32_t size, 
         if (paddr == 0)
         {
             log_printf("mem alloc failed. no memory");
-            return 0;
+            return -1;
         }
 
         int err = memory_create_map((pde_t *)page_dir, curr_vaddr, paddr, 1, perm);
@@ -220,7 +221,7 @@ int memory_alloc_for_page_dir(uint32_t page_dir, uint32_t vaddr, uint32_t size, 
         if (err < 0)
         {
             log_printf("create memory failed. err = %d", err);
-            return 0;
+            return -1;
         }
 
         curr_vaddr += MEM_PAGE_SIZE;
@@ -325,7 +326,7 @@ uint32_t memory_copy_uvm(uint32_t page_dir)
 copy_uvm_failed:
     if (to_page_dir)
         memory_destroy_uvm(to_page_dir);
-    return 0;
+    return -1;
 }
 
 uint32_t memory_get_paddr(uint32_t page_dir, uint32_t vaddr)
@@ -372,7 +373,7 @@ char *sys_sbrk(int incr)
     int pre_incr = incr;
     if (incr == 0)
     {
-        log_printf("sbrk(0): end=0x%x", pre_heap_end);
+        log_printf("sbrk(0): end=0x%x\n", pre_heap_end);
         return pre_heap_end;
     }
 

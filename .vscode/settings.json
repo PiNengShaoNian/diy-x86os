@@ -31,6 +31,7 @@
         "main.h": "c",
         "devfs.h": "c",
         "disk.h": "c",
-        "fatfs.h": "c"
+        "fatfs.h": "c",
+        "file.h": "c"
     },
 }

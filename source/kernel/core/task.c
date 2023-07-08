@@ -570,6 +570,8 @@ static int load_phdr(int file, Elf32_Phdr *phdr, uint32_t page_dir)
         size -= curr_size;
         vaddr += curr_size;
     }
+
+    return 0;
 }
 
 static uint32_t load_elf_file(task_t *task, const char *name, uint32_t page_dir)

@@ -24,8 +24,6 @@ extern fs_op_t devfs_op;
 extern fs_op_t fatfs_op;
 static fs_t *root_fs;
 
-#define TEMP_FILE_ID 100
-
 static void read_disk(uint32_t sector, int sector_count, uint8_t *buf)
 {
     outb(0x1F6, 0xE0);
@@ -122,14 +120,6 @@ static void fs_leave_protect(fs_t *fs)
 // /dev/ /home
 int sys_open(const char *name, int flags, ...)
 {
-    if (kernel_strncmp(name, "/shell.elf", 9) == 0)
-    {
-        int dev_id = dev_open(DEV_DISK, 0xa0, (void *)0);
-        dev_read(dev_id, 5000, (uint8_t *)TEMP_ADDR, 80);
-        temp_pos = TEMP_ADDR;
-        return TEMP_FILE_ID;
-    }
-
     file_t *file = file_alloc();
     if (!file)
         return -1;
@@ -187,15 +177,8 @@ sys_open_failed:
 
 int sys_read(int file, char *ptr, int len)
 {
-    if (file == TEMP_FILE_ID)
-    {
-        kernel_memcpy(ptr, temp_pos, len);
-        temp_pos += len;
-        return len;
-    }
-
     if (is_fd_bad(file) || !ptr || !len)
-        return 0;
+        return -1;
 
     file_t *p_file = task_file(file);
     if (!p_file)
@@ -243,14 +226,8 @@ int sys_write(int file, char *ptr, int len)
 
 int sys_lseek(int file, int ptr, int dir)
 {
-    if (file == TEMP_FILE_ID)
-    {
-        temp_pos = (uint8_t *)(TEMP_ADDR + ptr);
-        return 0;
-    }
-
     if (is_fd_bad(file))
-        return 0;
+        return -1;
 
     file_t *p_file = task_file(file);
     if (!p_file)
@@ -269,13 +246,10 @@ int sys_lseek(int file, int ptr, int dir)
 
 int sys_close(int file)
 {
-    if (file == TEMP_FILE_ID)
-        return 0;
-
     if (is_fd_bad(file))
     {
         log_printf("file error");
-        return 0;
+        return -1;
     }
 
     file_t *p_file = task_file(file);
@@ -305,7 +279,7 @@ int sys_close(int file)
 int sys_isatty(int file)
 {
     if (is_fd_bad(file))
-        return 0;
+        return -1;
 
     file_t *p_file = task_file(file);
     if (!p_file)
@@ -320,7 +294,7 @@ int sys_isatty(int file)
 int sys_fstat(int file, struct stat *st)
 {
     if (is_fd_bad(file))
-        return 0;
+        return -1;
 
     file_t *p_file = task_file(file);
     if (!p_file)

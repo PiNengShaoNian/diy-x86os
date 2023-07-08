@@ -3,6 +3,7 @@
 #include "core/memory.h"
 #include "tools/log.h"
 #include "fs/fs.h"
+#include "dev/tty.h"
 
 typedef int (*syscall_handler_t)(uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3);
 
@@ -31,6 +32,7 @@ static const syscall_handler_t sys_table[] = {
     [SYS_fstat] = (syscall_handler_t)sys_fstat,
     [SYS_sbrk] = (syscall_handler_t)sys_sbrk,
     [SYS_dup] = (syscall_handler_t)sys_dup,
+    [SYS_ioctl] = (syscall_handler_t)sys_ioctl,
 
     [SYS_opendir] = (syscall_handler_t)sys_opendir,
     [SYS_readdir] = (syscall_handler_t)sys_readdir,

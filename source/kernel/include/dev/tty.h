@@ -6,6 +6,8 @@
 #define TTY_OBUF_SIZE 512
 #define TTY_IBUF_SIZE 512
 
+#define TTY_CMD_ECHO 0x1
+
 #include "ipc/sem.h"
 #include "dev.h"
 

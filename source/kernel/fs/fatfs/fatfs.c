@@ -111,13 +111,47 @@ static void read_from_diritem(fat_t *fat, file_t *file, diritem_t *item, int ind
     file->cblk = file->sblk;
 }
 
+int cluster_is_valid(cluster_t cluster)
+{
+    return cluster < FAT_CLUSTER_INVALID && cluster >= 2;
+}
+
+int cluster_get_next(fat_t *fat, cluster_t curr)
+{
+    if (!cluster_is_valid(curr))
+        return FAT_CLUSTER_INVALID;
+
+    int offset = curr * sizeof(cluster_t);
+    int sector = offset / fat->bytes_per_sector;
+    int off_sector = offset % fat->bytes_per_sector;
+
+    if (sector >= fat->tbl_sectors)
+    {
+        log_printf("cluster too big");
+        return FAT_CLUSTER_INVALID;
+    }
+
+    int err = bread_sector(fat, fat->tbl_start + sector);
+    if (err < 0)
+        return FAT_CLUSTER_INVALID;
+
+    return *(cluster_t *)(fat->fat_buffer + off_sector);
+}
+
 static int move_file_pos(file_t *file, fat_t *fat, uint32_t move_bytes, int expand)
 {
     uint32_t c_offset = file->pos % fat->cluster_byte_size;
     if (c_offset + move_bytes >= fat->cluster_byte_size)
-        return -1;
+    {
+        cluster_t next = cluster_get_next(fat, file->cblk);
 
-    file->pos = move_bytes;
+        if (next == FAT_CLUSTER_INVALID)
+            return -1;
+
+        file->cblk = next;
+    }
+
+    file->pos += move_bytes;
     return 0;
 }
 

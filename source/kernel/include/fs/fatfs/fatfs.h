@@ -5,6 +5,8 @@
 
 #pragma pack(1)
 
+#define FAT_CLUSTER_INVALID 0xFFF8
+
 #define DIRITEM_NAME_FREE 0xE5 // 目录项空闲名标记
 #define DIRITEM_NAME_END 0x00  // 目录项结束名标记
 
@@ -83,5 +85,7 @@ typedef struct _fat_t
     int curr_sector;
     struct _fs_t *fs;
 } fat_t;
+
+typedef uint16_t cluster_t;
 
 #endif

@@ -44,6 +44,37 @@ void diritem_get_name(diritem_t *item, char *dest)
         ext[0] = '\0';
 }
 
+static void to_sfn(char *dest, const char *src)
+{
+    kernel_memset(dest, ' ', 11);
+
+    char *curr = dest;
+    char *end = dest + 11;
+    while (*src && curr < end)
+    {
+        char c = *src++;
+        switch (c)
+        {
+        case '.':
+            curr = dest + 8;
+            break;
+        default:
+            if ((c >= 'a') && (c <= 'z'))
+                c = c - 'a' + 'A';
+
+            *curr++ = c;
+            break;
+        }
+    }
+}
+
+int diritem_name_match(diritem_t *item, const char *path)
+{
+    char buf[11];
+    to_sfn(buf, path);
+    return kernel_memcmp(buf, item->DIR_Name, 11) == 0;
+}
+
 static diritem_t *read_dir_entry(fat_t *fat, int index)
 {
     if (index < 0 || (index >= fat->root_ent_cnt))
@@ -68,6 +99,16 @@ file_type_t diritem_get_type(diritem_t *diritem)
         return FILE_UNKOWN;
 
     return (diritem->DIR_Attr & DIRITEM_ATTR_DIRECTORY) ? FILE_DIR : FILE_NORMAL;
+}
+
+static void read_from_diritem(fat_t *fat, file_t *file, diritem_t *item, int index)
+{
+    file->type = diritem_get_type(item);
+    file->size = item->DIR_FileSize;
+    file->pos = 0;
+    file->p_index = 0;
+    file->sblk = (item->DIR_FstClusHI << 16) | (item->DIR_FstClusL0);
+    file->cblk = file->sblk;
 }
 
 int fatfs_mount(struct _fs_t *fs, int major, int minor)
@@ -142,6 +183,36 @@ void fatfs_unmount(struct _fs_t *fs)
 
 int fatfs_open(struct _fs_t *fs, const char *path, file_t *file)
 {
+    fat_t *fat = (fat_t *)fs->data;
+    diritem_t *file_item = (diritem_t *)0;
+    int p_index = -1;
+
+    for (int i = 0; i < fat->root_ent_cnt; i++)
+    {
+        diritem_t *item = read_dir_entry(fat, i);
+        if (item == (diritem_t *)0)
+            return -1;
+
+        if (item->DIR_Name[0] == DIRITEM_NAME_END)
+            break;
+
+        if (item->DIR_Name[0] == DIRITEM_NAME_FREE)
+            continue;
+
+        if (diritem_name_match(item, path))
+        {
+            file_item = item;
+            p_index = i;
+            break;
+        }
+    }
+
+    if (file_item)
+    {
+        read_from_diritem(fat, file, file_item, p_index);
+        return 0;
+    }
+
     return -1;
 }
 

@@ -107,6 +107,52 @@ static int do_ls(int argc, char **argv)
     closedir(p_dir);
 }
 
+static int do_less(int argc, char **argv)
+{
+    int ch;
+    optind = 1;
+    while ((ch = getopt(argc, argv, "lh")) != -1)
+    {
+        switch (ch)
+        {
+        case 'h':
+            puts("show file content");
+            puts("Usage: less [-l] file");
+            return 0;
+        case '?':
+            if (optarg)
+                fprintf(stderr, "Unknown option: -%s\n", optarg);
+
+            return -1;
+        default:
+            break;
+        }
+    }
+
+    if (optind > argc - 1)
+    {
+        fprintf(stderr, "no file\n");
+        return -1;
+    }
+
+    FILE *file = fopen(argv[optind], "r");
+    if (file == NULL)
+    {
+        fprintf(stderr, "open file failed. %s", argv[optind]);
+        return -1;
+    }
+
+    char *buf = (char *)malloc(255);
+    while (fgets(buf, 255, file) != NULL)
+    {
+        fputs(buf, stdout);
+    }
+    free(buf);
+    fclose(file);
+
+    return 0;
+}
+
 static const cli_cmd_t cmd_list[] = {
     {
         .name = "help",
@@ -127,6 +173,11 @@ static const cli_cmd_t cmd_list[] = {
         .name = "ls",
         .usage = "ls -- list directory",
         .do_func = do_ls,
+    },
+    {
+        .name = "less",
+        .usage = "less [-l] -- show file",
+        .do_func = do_less,
     },
     {
         .name = "quit",

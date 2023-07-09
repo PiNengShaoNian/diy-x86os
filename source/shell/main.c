@@ -257,7 +257,7 @@ static int do_cp(int argc, char **argv)
     int size;
     while ((size = fread(buf, 1, 255, from)) > 0)
     {
-        fwrite(buf, 1, 255, to);
+        fwrite(buf, 1, size, to);
     }
 
     free(buf);

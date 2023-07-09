@@ -6,6 +6,7 @@
 #include "tools/klib.h"
 #include "core/memory.h"
 #include <sys/fcntl.h>
+#include "tools/klib.h"
 
 static int bread_sector(fat_t *fat, int sector)
 {
@@ -197,6 +198,98 @@ int cluster_set_next(fat_t *fat, cluster_t curr, cluster_t next)
     return 0;
 }
 
+void cluster_free_chain(fat_t *fat, cluster_t start)
+{
+    while (cluster_is_valid(start))
+    {
+        cluster_t next = cluster_get_next(fat, start);
+        cluster_set_next(fat, start, CLUSTER_FAT_FREE);
+        start = next;
+    }
+}
+
+cluster_t cluster_alloc_free(fat_t *fat, int cnt)
+{
+    cluster_t pre, curr, start;
+
+    pre = start = FAT_CLUSTER_INVALID;
+    int c_total = fat->tbl_sectors * fat->bytes_per_sector / sizeof(cluster_t);
+    for (curr = 2; cnt && (curr < c_total); curr++)
+    {
+        cluster_t free = cluster_get_next(fat, curr);
+        if (free == CLUSTER_FAT_FREE)
+        {
+            if (!cluster_is_valid(start))
+                start = curr;
+
+            if (cluster_is_valid(pre))
+            {
+                int err = cluster_set_next(fat, pre, curr);
+                if (err < 0)
+                {
+                    cluster_free_chain(fat, start);
+                    return FAT_CLUSTER_INVALID;
+                }
+            }
+
+            pre = curr;
+            cnt--;
+        }
+    }
+
+    if (cnt == 0)
+    {
+        int err = cluster_set_next(fat, pre, FAT_CLUSTER_INVALID);
+        if (err == 0)
+            return start;
+    }
+
+    cluster_free_chain(fat, start);
+    return FAT_CLUSTER_INVALID;
+}
+
+static int expand_file(file_t *file, int incr_bytes)
+{
+    fat_t *fat = (fat_t *)file->fs->data;
+
+    int cluster_cnt;
+    if (file->size == 0 || (file->size % fat->cluster_byte_size == 0))
+    {
+        cluster_cnt = up2(incr_bytes, fat->cluster_byte_size) / fat->cluster_byte_size;
+    }
+    else
+    {
+        int cfree = fat->cluster_byte_size - file->size % fat->cluster_byte_size;
+        if (cfree > incr_bytes)
+            return 0;
+
+        cluster_cnt = up2(incr_bytes - cfree, fat->cluster_byte_size) / fat->cluster_byte_size;
+
+        if (cluster_cnt == 0)
+            cluster_cnt = 1;
+    }
+
+    cluster_t start = cluster_alloc_free(fat, cluster_cnt);
+    if (!cluster_is_valid(start))
+    {
+        log_printf("no cluster for file write");
+        return -1;
+    }
+
+    if (!cluster_is_valid(file->sblk))
+    {
+        file->sblk = file->cblk = start;
+    }
+    else
+    {
+        int err = cluster_set_next(fat, file->cblk, start);
+        if (err < 0)
+            return -1;
+    }
+
+    return 0;
+}
+
 int diritem_init(diritem_t *item, uint8_t attr, const char *name)
 {
     to_sfn((char *)item->DIR_Name, name);
@@ -214,16 +307,6 @@ int diritem_init(diritem_t *item, uint8_t attr, const char *name)
     return 0;
 }
 
-void cluster_free_chain(fat_t *fat, cluster_t start)
-{
-    while (cluster_is_valid(start))
-    {
-        cluster_t next = cluster_get_next(fat, start);
-        cluster_set_next(fat, start, CLUSTER_FAT_FREE);
-        start = next;
-    }
-}
-
 static int move_file_pos(file_t *file, fat_t *fat, uint32_t move_bytes, int expand)
 {
     uint32_t c_offset = file->pos % fat->cluster_byte_size;
@@ -231,8 +314,14 @@ static int move_file_pos(file_t *file, fat_t *fat, uint32_t move_bytes, int expa
     {
         cluster_t next = cluster_get_next(fat, file->cblk);
 
-        if (next == FAT_CLUSTER_INVALID)
-            return -1;
+        if (next == FAT_CLUSTER_INVALID && expand)
+        {
+            int err = expand_file(file, fat->cluster_byte_size);
+            if (err < 0)
+                return -1;
+
+            next = cluster_get_next(fat, file->cblk);
+        }
 
         file->cblk = next;
     }
@@ -347,6 +436,13 @@ int fatfs_open(struct _fs_t *fs, const char *path, file_t *file)
     if (file_item)
     {
         read_from_diritem(fat, file, file_item, p_index);
+        if (file->mode & O_TRUNC)
+        {
+            cluster_free_chain(fat, file->sblk);
+            file->cblk = file->sblk = FAT_CLUSTER_INVALID;
+            file->size = 0;
+        }
+
         return 0;
     }
     else if (file->mode & O_CREAT && p_index >= 0)
@@ -419,11 +515,78 @@ int fatfs_read(char *buf, int size, file_t *file)
 
 int fatfs_write(char *buf, int size, file_t *file)
 {
-    return -1;
+    fat_t *fat = (fat_t *)file->fs->data;
+
+    if (file->pos + size > file->size)
+    {
+        int inc_size = file->pos + size - file->size;
+        int err = expand_file(file, inc_size);
+        if (err < 0)
+            return 0;
+    }
+
+    uint32_t nbytes = size;
+    uint32_t total_write = 0;
+    while (nbytes)
+    {
+        uint32_t curr_write = nbytes;
+        uint32_t cluster_offset = file->pos % fat->cluster_byte_size;
+        uint32_t start_sector = fat->data_start + (file->cblk - 2) * fat->sec_per_cluster;
+
+        if (cluster_offset == 0 && nbytes == fat->cluster_byte_size)
+        {
+            int err = dev_write(fat->fs->dev_id, start_sector, buf, fat->sec_per_cluster);
+            if (err < 0)
+                return total_write;
+
+            curr_write = fat->cluster_byte_size;
+        }
+        else
+        {
+            if (cluster_offset + curr_write > fat->cluster_byte_size)
+                curr_write = fat->cluster_byte_size - cluster_offset;
+
+            fat->curr_sector = -1;
+            int err = dev_read(fat->fs->dev_id, start_sector, fat->fat_buffer, fat->sec_per_cluster);
+            if (err < 0)
+                return total_write;
+            kernel_memcpy(fat->fat_buffer + cluster_offset, buf, curr_write);
+            err = dev_write(fat->fs->dev_id, start_sector, fat->fat_buffer, fat->sec_per_cluster);
+            if (err < 0)
+                return total_write;
+        }
+
+        buf += curr_write;
+        nbytes -= curr_write;
+        total_write += curr_write;
+        file->size += curr_write;
+
+        int err = move_file_pos(file, fat, curr_write, 1);
+
+        if (err < 0)
+            return total_write;
+    }
+
+    return total_write;
 }
 
 void fatfs_close(file_t *file)
 {
+    if (file->mode == O_RDONLY)
+    {
+        return;
+    }
+
+    fat_t *fat = (fat_t *)file->fs->data;
+
+    diritem_t *item = read_dir_entry(fat, file->p_index);
+    if (item == (diritem_t *)0)
+        return;
+
+    item->DIR_FileSize = file->size;
+    item->DIR_FstClusHI = (uint16_t)(file->sblk >> 16);
+    item->DIR_FstClusL0 = (uint16_t)(file->sblk & 0xFFFF);
+    write_dir_entry(fat, item, file->p_index);
 }
 
 int fatfs_seek(file_t *file, uint32_t offset, int dir)

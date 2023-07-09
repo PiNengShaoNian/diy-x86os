@@ -49,7 +49,7 @@ add_subdirectory(./source/loader)
 add_subdirectory(./source/kernel)
 add_subdirectory(./source/applib)
 add_subdirectory(./source/shell)
-# add_subdirectory(./source/init)
+add_subdirectory(./source/init)
 add_subdirectory(./source/loop)
 
 # 添加编译依赖，先生成app库，再生成kernel和shell

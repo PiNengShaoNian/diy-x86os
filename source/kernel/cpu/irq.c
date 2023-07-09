@@ -3,6 +3,7 @@
 #include "cpu/irq.h"
 #include "os_cfg.h"
 #include "tools/log.h"
+#include "core/task.h"
 
 #define IDT_TABLE_NR 128
 
@@ -43,8 +44,16 @@ static void do_default_handler(exception_frame_t *frame, const char *message)
     log_printf("IRQ/Exception happened: %s", message);
     dump_core_regs(frame);
 
-    for (;;)
-        hlt();
+    if (frame->cs & 0x3)
+    {
+        sys_exit(frame->error_code);
+    }
+    else
+    {
+
+        while (1)
+            hlt();
+    }
 }
 
 void do_handler_unknown(exception_frame_t *frame)
@@ -54,7 +63,7 @@ void do_handler_unknown(exception_frame_t *frame)
 
 void do_handler_divider(exception_frame_t *frame)
 {
-    do_default_handler(frame, "Device Error.");
+    do_default_handler(frame, "Divider Error.");
 }
 
 void do_handler_Debug(exception_frame_t *frame)
@@ -141,14 +150,23 @@ void do_handler_general_protection(exception_frame_t *frame)
     log_printf("segment index: %d", frame->error_code & 0xFFF8);
 
     dump_core_regs(frame);
-    while (1)
-        hlt();
+
+    if (frame->cs & 0x3)
+    {
+        sys_exit(frame->error_code);
+    }
+    else
+    {
+
+        while (1)
+            hlt();
+    }
 }
 
 void do_handler_page_fault(exception_frame_t *frame)
 {
     log_printf("--------------------------------");
-    log_printf("IRQ/Exception happend: Page fault.");
+    log_printf("IRQ/Exception happened: Page fault.");
     if (frame->error_code & ERR_PAGE_P)
     {
         log_printf("\tpage-level protection violation: 0x%x.", read_cr2());
@@ -177,8 +195,17 @@ void do_handler_page_fault(exception_frame_t *frame)
     }
 
     dump_core_regs(frame);
-    for (;;)
-        hlt();
+
+    if (frame->cs & 0x3)
+    {
+        sys_exit(frame->error_code);
+    }
+    else
+    {
+
+        while (1)
+            hlt();
+    }
 }
 
 void do_handler_fpu_error(exception_frame_t *frame)

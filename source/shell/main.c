@@ -232,6 +232,45 @@ static int do_ls(int argc, char **argv)
     return 0;
 }
 
+/**
+ * @brief 复制文件
+ */
+static int do_cp(int argc, char **argv)
+{
+    if (argc < 3)
+    {
+        fprintf(stderr, "no [from] or no [to]");
+        return -1;
+    }
+
+    FILE *from, *to;
+    from = fopen(argv[1], "rb");
+    to = fopen(argv[2], "wb");
+
+    if (!from || !to)
+    {
+        fprintf(stderr, "open file failed");
+        goto cp_failed;
+    }
+
+    char *buf = (char *)malloc(255);
+    int size;
+    while ((size = fread(buf, 1, 255, from)) > 0)
+    {
+        fwrite(buf, 1, 255, to);
+    }
+
+    free(buf);
+
+cp_failed:
+    if (from)
+        fclose(from);
+
+    if (to)
+        fclose(to);
+    return 0;
+}
+
 // 命令列表
 static const cli_cmd_t cmd_list[] = {
     {
@@ -258,6 +297,11 @@ static const cli_cmd_t cmd_list[] = {
         .name = "less",
         .usage = "list text file content",
         .do_func = do_less,
+    },
+    {
+        .name = "cp",
+        .usage = "cp src dest",
+        .do_func = do_cp,
     },
     {
         .name = "quit",

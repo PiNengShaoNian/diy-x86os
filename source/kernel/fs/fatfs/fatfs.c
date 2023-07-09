@@ -367,6 +367,8 @@ int fatfs_mount(struct _fs_t *fs, int major, int minor)
     fat->data_start = fat->root_start + fat->root_ent_cnt * 32 / SECTOR_SIZE;
     fat->curr_sector = -1;
     fat->fs = fs;
+    mutex_init(&fat->mutex);
+    fs->mutex = &fat->mutex;
 
     if (fat->tbl_cnt != 2)
     {

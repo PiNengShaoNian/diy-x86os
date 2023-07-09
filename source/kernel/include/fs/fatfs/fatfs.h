@@ -2,6 +2,7 @@
 #define FATFS_H
 
 #include "comm/types.h"
+#include "ipc/mutex.h"
 
 #pragma pack(1)
 
@@ -85,6 +86,7 @@ typedef struct _fat_t
     uint8_t *fat_buffer;
     int curr_sector;
     struct _fs_t *fs;
+    mutex_t mutex;
 } fat_t;
 
 typedef uint16_t cluster_t;

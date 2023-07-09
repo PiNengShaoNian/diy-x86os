@@ -375,9 +375,18 @@ static void run_builtin(const cli_cmd_t *cmd, int argc, char **argv)
 
 static const char *find_exec_path(const char *filename)
 {
+    static char path[255];
     int fd = open(filename, 0);
     if (fd < 0)
-        return (const char *)0;
+    {
+        sprintf(path, "%s.elf", filename);
+        fd = open(path, 0);
+        if (fd < 0)
+            return (const char *)0;
+
+        return path;
+        close(fd);
+    }
 
     close(fd);
     return filename;

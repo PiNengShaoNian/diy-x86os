@@ -93,10 +93,10 @@ file_type_t diritem_get_type(diritem_t *diritem)
 {
     if (diritem->DIR_Attr & (DIRITEM_ATTR_VOLUME_ID |
                              DIRITEM_ATTR_HIDDEN | DIRITEM_ATTR_SYSTEM))
-        return FILE_UNKOWN;
+        return FILE_UNKNOWN;
 
     if ((diritem->DIR_Attr & DIRITEM_ATTR_LONG_NAME) == DIRITEM_ATTR_LONG_NAME)
-        return FILE_UNKOWN;
+        return FILE_UNKNOWN;
 
     return (diritem->DIR_Attr & DIRITEM_ATTR_DIRECTORY) ? FILE_DIR : FILE_NORMAL;
 }

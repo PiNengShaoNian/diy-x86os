@@ -128,9 +128,6 @@ int sys_open(const char *name, int flags, ...)
     if (fd < 0)
         goto sys_open_failed;
 
-    if (kernel_strlen(name) < 5)
-        goto sys_open_failed;
-
     fs_t *fs = (fs_t *)0;
     list_node_t *node = list_first(&mounted_list);
     while (node)

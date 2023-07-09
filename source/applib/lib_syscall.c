@@ -244,3 +244,11 @@ int closedir(DIR *dir)
     free(dir);
     return 0;
 }
+
+int unlink(const char *pathname)
+{
+    syscall_args_t args;
+    args.id = SYS_unlink;
+    args.arg0 = (int)pathname;
+    return sys_call(&args);
+}

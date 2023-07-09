@@ -37,6 +37,7 @@ static const syscall_handler_t sys_table[] = {
     [SYS_opendir] = (syscall_handler_t)sys_opendir,
     [SYS_readdir] = (syscall_handler_t)sys_readdir,
     [SYS_closedir] = (syscall_handler_t)sys_closedir,
+    [SYS_unlink] = (syscall_handler_t)sys_unlink,
 };
 
 void do_handler_syscall(syscall_frame_t *frame)

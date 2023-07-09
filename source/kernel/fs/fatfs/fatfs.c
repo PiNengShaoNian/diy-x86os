@@ -162,6 +162,41 @@ int cluster_get_next(fat_t *fat, cluster_t curr)
     return *(cluster_t *)(fat->fat_buffer + off_sector);
 }
 
+int cluster_set_next(fat_t *fat, cluster_t curr, cluster_t next)
+{
+    if (!cluster_is_valid(curr))
+        return -1;
+
+    int offset = curr * sizeof(cluster_t);
+    int sector = offset / fat->bytes_per_sector;
+    int off_sector = offset % fat->bytes_per_sector;
+
+    if (sector >= fat->tbl_sectors)
+    {
+        log_printf("cluster too big");
+        return -1;
+    }
+
+    int err = bread_sector(fat, fat->tbl_start + sector);
+    if (err < 0)
+        return -1;
+
+    *(cluster_t *)(fat->fat_buffer + off_sector) = next;
+    for (int i = 0; i < fat->tbl_cnt; i++)
+    {
+        err = bwrite_sector(fat, fat->tbl_start + sector);
+        if (err < 0)
+        {
+            log_printf("write cluster failed.");
+            return -1;
+        }
+
+        sector += fat->tbl_sectors;
+    }
+
+    return 0;
+}
+
 int diritem_init(diritem_t *item, uint8_t attr, const char *name)
 {
     to_sfn((char *)item->DIR_Name, name);
@@ -177,6 +212,16 @@ int diritem_init(diritem_t *item, uint8_t attr, const char *name)
     item->DIR_WrtTime = 0;
     item->DIR_LastAccDate = 0;
     return 0;
+}
+
+void cluster_free_chain(fat_t *fat, cluster_t start)
+{
+    while (cluster_is_valid(start))
+    {
+        cluster_t next = cluster_get_next(fat, start);
+        cluster_set_next(fat, start, CLUSTER_FAT_FREE);
+        start = next;
+    }
 }
 
 static int move_file_pos(file_t *file, fat_t *fat, uint32_t move_bytes, int expand)
@@ -278,17 +323,23 @@ int fatfs_open(struct _fs_t *fs, const char *path, file_t *file)
         if (item == (diritem_t *)0)
             return -1;
 
-        p_index = i;
-
         if (item->DIR_Name[0] == DIRITEM_NAME_END)
+        {
+            if (p_index == -1)
+                p_index = i;
             break;
+        }
 
         if (item->DIR_Name[0] == DIRITEM_NAME_FREE)
+        {
+            p_index = i;
             continue;
+        }
 
         if (diritem_name_match(item, path))
         {
             file_item = item;
+            p_index = i;
             break;
         }
     }
@@ -298,7 +349,7 @@ int fatfs_open(struct _fs_t *fs, const char *path, file_t *file)
         read_from_diritem(fat, file, file_item, p_index);
         return 0;
     }
-    else if (file->mode & O_CREAT)
+    else if (file->mode & O_CREAT && p_index >= 0)
     {
         diritem_t item;
         diritem_init(&item, 0, path);
@@ -458,6 +509,37 @@ int fatfs_closedir(struct _fs_t *fs, DIR *dir)
     return 0;
 }
 
+int fatfs_unlink(struct _fs_t *fs, const char *path)
+{
+    fat_t *fat = (fat_t *)fs->data;
+
+    for (int i = 0; i < fat->root_ent_cnt; i++)
+    {
+        diritem_t *item = read_dir_entry(fat, i);
+        if (item == (diritem_t *)0)
+            return -1;
+
+        if (item->DIR_Name[0] == DIRITEM_NAME_END)
+            break;
+
+        if (item->DIR_Name[0] == DIRITEM_NAME_FREE)
+            continue;
+
+        if (diritem_name_match(item, path))
+        {
+            int cluster = (item->DIR_FstClusHI << 16) | item->DIR_FstClusL0;
+            cluster_free_chain(fat, cluster);
+
+            diritem_t item;
+            kernel_memset(&item, 0, sizeof(diritem_t));
+            item.DIR_Name[0] = DIRITEM_NAME_FREE;
+            return write_dir_entry(fat, &item, i);
+        }
+    }
+
+    return -1;
+}
+
 fs_op_t fatfs_op = {
     .mount = fatfs_mount,
     .unmount = fatfs_unmount,
@@ -471,4 +553,5 @@ fs_op_t fatfs_op = {
     .opendir = fatfs_opendir,
     .readdir = fatfs_readdir,
     .closedir = fatfs_closedir,
+    .unlink = fatfs_unlink,
 };

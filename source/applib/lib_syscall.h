@@ -36,6 +36,7 @@ int close(int file);
 int lseek(int file, int ptr, int dir);
 int ioctl(int file, int cmd, int arg0, int arg1);
 
+int unlink(const char *pathname);
 int isatty(int file);
 int fstat(int file, struct stat *st);
 void *sbrk(ptrdiff_t incr);

@@ -25,6 +25,7 @@ typedef struct _fs_op_t
     int (*opendir)(struct _fs_t *fs, const char *name, DIR *dir);
     int (*readdir)(struct _fs_t *fs, DIR *dir, struct dirent *dirent);
     int (*closedir)(struct _fs_t *fs, DIR *dir);
+    int (*unlink)(struct _fs_t *fs, const char *path);
 } fs_op_t;
 
 #define FS_MOUNTP_SIZE 512
@@ -68,5 +69,6 @@ int sys_ioctl(int file, int cmd, int arg0, int arg1);
 int sys_opendir(const char *name, DIR *dir);
 int sys_readdir(DIR *dir, struct dirent *dirent);
 int sys_closedir(DIR *dir);
+int sys_unlink(const char *path);
 
 #endif

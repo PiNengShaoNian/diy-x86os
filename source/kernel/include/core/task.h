@@ -12,6 +12,8 @@
 
 #define TASK_FLAGS_SYSTEM (1 << 0)
 
+#define TASK_STATUS_TMO	-1
+
 typedef struct _task_args_t
 {
     uint32_t ret_addr;
@@ -45,6 +47,7 @@ typedef struct _task_t
     file_t *file_table[TASK_OFILE_NR];
     char name[TASK_NAME_SIZE];
     list_node_t run_node;
+    list_t * wait_list;			// 正在等等的队列
     list_node_t wait_node;
     list_node_t all_node;
     tss_t tss;
@@ -97,5 +100,6 @@ void task_set_wakeup(task_t *task);
 int sys_getpid(void);
 int sys_fork(void);
 int sys_execve(char *name, char **argv, char **env);
+void task_start(task_t * task);
 
 #endif

@@ -7,6 +7,12 @@ set(LIBS_FLAGS "-L ${CMAKE_BINARY_DIR}/source/applib/")
 set(CMAKE_EXE_LINKER_FLAGS "-m elf_i386  -T ${PROJECT_SOURCE_DIR}/kernel.lds ${LIBS_FLAGS}")
 set(CMAKE_C_LINK_EXECUTABLE "${LINKER_TOOL} <OBJECTS> ${CMAKE_EXE_LINKER_FLAGS} -o ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.elf")
 
+# 头文件搜索路径
+include_directories(
+    ${PROJECT_SOURCE_DIR}/net/net
+    ${PROJECT_SOURCE_DIR}/net/plat
+)
+
 # 将所有的汇编、C文件加入工程
 # 注意保证start.asm在最前头，这样对应的程序会放在bin文件开头，从而在加载到0x7c00时能在开头处
 file(GLOB_RECURSE C_LIST "*.c" "*.h" "*.S")

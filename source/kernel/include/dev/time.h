@@ -1,6 +1,8 @@
 #ifndef TIME_H
 #define TIME_H
 
+#include "comm/types.h"
+
 #define PIT_OSC_FREQ 1193182 // 定时器时钟
 
 // 定时器的寄存器和各项位配置
@@ -13,5 +15,6 @@
 
 void time_init(void);
 void exception_handler_time(void);
+uint32_t sys_get_ticks (void);
 
 #endif

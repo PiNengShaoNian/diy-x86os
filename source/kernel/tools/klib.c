@@ -92,7 +92,41 @@ int kernel_strncmp(const char *s1, const char *s2, int size)
     return !((*s1 == '\0') || (*s2 == '\0') || (*s1 == *s2));
 }
 
-void kernel_memcpy(void *dest, void *src, int size)
+int kernel_strcmp (const char * s1, const char * s2) {
+    if (!s1 || !s2) {
+        return -1;
+    }
+
+    while (*s1 && *s2 && (*s1 == *s2)) {
+    	s1++;
+    	s2++;
+    }
+
+    return !((*s1 == '\0') || (*s2 == '\0') || (*s1 == *s2));
+}
+
+char kernel_tolower (char ch) {
+    if ((ch >= 'A') && (ch <= 'Z')) {
+        return ch - 'A' + 'a';
+    } else {
+        return ch;
+    }
+}
+
+int kernel_stricmp (const char * s1, const char * s2) {
+    if (!s1 || !s2) {
+        return -1;
+    }
+
+    while (*s1 && *s2 && (kernel_tolower(*s1) == kernel_tolower(*s2))) {
+    	s1++;
+    	s2++;
+    }
+
+    return !((*s1 == '\0') || (*s2 == '\0') || (*s1 == *s2));
+}
+
+void kernel_memcpy(void *dest,const void *src, int size)
 {
     if (!dest || !src || !size)
         return;
@@ -113,7 +147,7 @@ void kernel_memset(void *dest, uint8_t v, int size)
         *d++ = v;
 }
 
-int kernel_memcmp(void *d1, void *d2, int size)
+int kernel_memcmp(const void *d1,const void *d2, int size)
 {
     if (!d1 || !d2)
         return 1;

@@ -7,6 +7,10 @@
 
 static uint32_t sys_tick;
 
+uint32_t sys_get_ticks (void) {
+    return sys_tick;
+}
+
 void do_handler_time(exception_frame_t *frame)
 {
     sys_tick++;

@@ -449,6 +449,14 @@ void task_time_tick()
         {
             task_set_wakeup(task);
             task_set_ready(task);
+
+            // 如果任务同时在等待某种事件，从等待队列中移除
+            if(task->wait_list)
+            {
+                task->status = TASK_STATUS_TMO;
+                list_remove(task->wait_list, &task->wait_node);
+                task->wait_list = (list_t *)0;
+            }
         }
 
         curr = next;
